@@ -1081,7 +1081,7 @@ _portageq() {
 	# this also isn't the fastest, but I welcome an alternative method
 	envvar)
 	    COMPREPLY=($(compgen -W "$(emerge -v --info | \
-		grep '^[[:upper:]].*=".*"' | sed -e 's/^\(.*\)=".*$/\1/')" -- ${cur}))
+                sed -n -e '/^[[:upper:]].*=".*"/s/^\(.*\)=".*$/\1/p')" -- ${cur}))
 	    ;;
 	    
 	*v@(isible|ersion)|match)
