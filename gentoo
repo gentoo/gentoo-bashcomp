@@ -301,30 +301,62 @@ _emerge()
     # Check for conditional.
     cond="${cur%%[A-Za-z0-9]*}"
     cur="${cur:${#cond}}"
-    [[ "${cond:0:1}" == "'" ]] && prepend="-P ${cond:1}"
+    [[ "${cond:0:1}" == "'" || "${cond:0:1}" == '"' ]] && prepend="-P ${cond:1}"
     
     # Handle cases where a conditional is specified.
     if [[ -n "${cond}" ]]; then
 	if [[ -n "${cur}" ]]; then
 	    if [[ "${cur}" == */* ]]; then
-		COMPREPLY=($(\
+                if [[ ${cur} == *-[0-9]* ]] ; then
+                    words="$(\
+                        for pd in ${portdir} ; do \
+                            builtin cd ${pd} ; \
+                            local cat="${cur%/*}" ; \
+                            local pkg="$(echo ${cur%-[0-9]*})" ; \
+                            pkg="${pkg##*/}"
+                            for x in ${cat}/${pkg}/*.ebuild ; do \
+                                [[ -f "${x}" ]] || continue ; \
+                                x="${x/${pkg}\/}" ; \
+                                echo "${x%*.ebuild}" ; \
+                            done ; \
+                        done)"
+                else
+		    words="$(\
                     for pd in ${portdir} ; do \
-                        builtin cd ${pd}; compgen ${prepend} -G "${cur}*" -- "${cur}" ; \
-                    done))
-		# Complete on the specific versions (if appropriate).
-		[[ ${#COMPREPLY[@]} -le 1 ]] && \
+                        builtin cd ${pd}; \
+                        compgen ${prepend} -G "${cur}*" -- "${cur}" ; \
+                    done)"
+                fi
+
+                local w
+                for x in $words ; do
+                    w="${x}\n${w}"
+                done
+
+                COMPREPLY=($(echo -ne ${w} | sort | uniq))
+		        # Complete on the specific versions (if appropriate).
+                if [[ ${#COMPREPLY[@]} -le 1 ]] ; then
 		    COMPREPLY=($(\
                         for pd in ${portdir} ; do \
                             if [[ -d ${pd}/metadata/cache ]] ; then
                                 builtin cd ${pd}/metadata/cache; \
                                 compgen ${prepend} -G "${cur}*" -- "${cur}" ; \
+                            else \
+                                builtin cd ${pd} ; \
+                                local cat="${cur%/*}" ; \
+                                local pkg="$(echo ${cur%-[0-9]*}*)" ; \
+                                pkg="${pkg##*/}"
+                                for x in ${cat}/${pkg}/*.ebuild ; do \
+                                    [[ -f "${x}" ]] || continue ; \
+                                    x="${x/${pkg}\/}" ; \
+                                    echo "${x%*.ebuild}" ; \
+                                done ; \
                             fi ; \
                         done))
+                else
+                    COMPREPLY=($(compgen -W "$(echo -ne ${w} | sort | uniq)" -- $cur))
+                fi
 	    else
-#                local p=$(_portdir)
-#                COMPREPLY=($(builtin cd ${p}; compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}"))
-#                [[ ${#COMPREPLY[@]} = 1 ]] && \
-#                    COMPREPLY=($(builtin cd ${p}; compgen ${prepend} -G "${cur}*/*" -- "${cur}"))
                 words="$(\
                     for pd in ${portdir} ; do \
                         builtin cd ${pd} ; \

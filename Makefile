@@ -7,6 +7,9 @@ distpkg := $(distapp)-$(distver)
 
 PREFIX = /usr
 
+all:
+	@echo Nothing to compile.
+
 install:
 	install -d "$(DESTDIR)$(PREFIX)/share/bash-completion"
 	install -m0644 gentoo "$(DESTDIR)$(PREFIX)/share/bash-completion"
@@ -16,8 +19,7 @@ install:
 
 dist:
 	mkdir -p "$(distpkg)"
-	$(MAKE) PREFIX="$(distpkg)" install
-	cp ChangeLog AUTHORS TODO COPYING "$(distpkg)/"
+	cp Makefile gentoo ChangeLog AUTHORS TODO COPYING "$(distpkg)/"
 	tar cjf "$(distpkg).tar.bz2" "$(distpkg)"
 	rm -fr "$(distpkg)/"
 	@echo "success."

@@ -1,3 +1,12 @@
+2005-03-16 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Tag 20050316 release.
+	* Fixed bug where conditionals like "=cat/pkg-ver" (with quotes)
+	would erase the conditional (=) when completing.  Thanks to mcummings
+	for making me aware of this.
+	* Fixed bug where version completion was only completing on things in
+	PORTDIR and not PORTDIR_OVERYLAY.
+
 2005-03-14 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Complete on packages in PORTDIR_OVERYLAY in addition to PORTDIR.
