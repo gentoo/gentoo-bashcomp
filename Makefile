@@ -5,10 +5,14 @@ distapp = gentoo-bashcomp
 distver := $(shell date --iso | sed -e 's~-~~g')
 distpkg := $(distapp)-$(distver)
 
-PREFIX = ${HOME}/.bash_completion.d
+PREFIX = /usr
 
 install:
-	cp gentoo "$(PREFIX)"
+	install -d "$(DESTDIR)$(PREFIX)/share/bash-completion"
+	install -m0644 gentoo "$(DESTDIR)$(PREFIX)/share/bash-completion"
+	install -d "$(DESTDIR)/etc/bash_completion.d"
+	ln -snf "../..$(PREFIX)/share/bash-completion/gentoo" \
+		"$(DESTDIR)/etc/bash_completion.d/gentoo"
 
 dist:
 	mkdir -p "$(distpkg)"
