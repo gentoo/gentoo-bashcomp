@@ -56,7 +56,6 @@ _pkgname()
     local cur="$1"
     local grepcmd="grep -E ^${cur}.*"
     local sedcmd="sed -e :^[^-]*$:d"
-    local portdir=$(_portdir)
     local prepend words
     
     # skip a single quote if specified with a condition
@@ -68,7 +67,7 @@ _pkgname()
     if [[ -n "${ins}" ]] ; then
 	# category has been specified already
 	if [[ "${cur}" == */* ]] ; then
-	    words=$(cd /var/db/pkg; compgen ${prepend} -G "${cur}*")
+	    words=$(builtin cd /var/db/pkg; compgen ${prepend} -G "${cur}*")
 	    if [[ -z "${ver}" ]] ; then
 		local x wordtmp
 		for x in $words ; do
@@ -80,9 +79,9 @@ _pkgname()
 
 	# complete on category
 	else
-	    words=$(cd /var/db/pkg; compgen -S '/' -G "${cur}*")
-            [[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ]] && \
-                words=$(cd /var/db/pkg; compgen ${prepend} -G "*/*")
+	    words=$(builtin cd /var/db/pkg; compgen -S '/' -G "${cur}*")
+            [[ $(echo "${words}" | wc -w) = 1 ]] && \
+                words=$(builtin cd /var/db/pkg; compgen ${prepend} -G "*/*")
 	fi
 
 	COMPREPLY=($(echo "${words}" | ${grepcmd}))
@@ -90,10 +89,10 @@ _pkgname()
 	# if all else fails, try to complete on the package name w/o the category
 	if [[ -z "${COMPREPLY}" ]]; then
 	    if [[ -n "${ver}" ]] ; then
-		words="$(cd /var/db/pkg ; for i in [a-z]*-[a-z0-9]*/${cur}* ; \
+		words="$(builtin cd /var/db/pkg ; for i in [a-z]*-[a-z0-9]*/${cur}* ; \
 		    do [[ -d $i ]] && echo ${i##*/} ; done)"
 	    else
-		words="$(cd /var/db/pkg ; for i in [a-z]*-[a-z0-9]*/${cur}* ; \
+		words="$(builtin cd /var/db/pkg ; for i in [a-z]*-[a-z0-9]*/${cur}* ; \
 		    do [[ -d $i ]] && ( local z=${i##*/} ; echo ${z%-[0-9]*} ) ; done)"
 	    fi
 	    
@@ -101,26 +100,27 @@ _pkgname()
 	    
 	    if [[ ${#COMPREPLY[@]} -le 1  && -n "${ver}" ]]; then
 		# Now complete on the specific versions.
-		words="$(cd /var/db/pkg ; for i in */${cur}*; do echo ${i##*/}; done)"
+		words="$(builtin cd /var/db/pkg ; for i in */${cur}*; do echo ${i##*/}; done)"
 		COMPREPLY=($(compgen ${prepend} -W '${words}' -- "${cur}"))
 	    fi
 	fi
 
     # complete on all packages
     else
+        local portdir=$(_portdir)
+
 	# category already specified
 	if [[ "${cur}" == */* ]] ; then
 	    if [[ -n "${ver}" ]] ; then
-		words=$(cd ${portdir}/metadata/cache ; compgen ${prepend} -G "${cur}*")
+		words=$(builtin cd ${portdir}/metadata/cache ; compgen ${prepend} -G "${cur}*")
 	    else
-		words=$(cd ${portdir} ; compgen ${prepend} -G "${cur}*" | ${sedcmd})
+                words=$(builtin cd ${portdir} ; compgen ${prepend} -G "${cur}*")
 	    fi
 	# complete on category
 	else
-	    words=$(cd ${portdir} ; compgen ${prepend} -X "!*-*" -S '/' -G "${cur}*" | \
-		${sedcmd})
-	    [[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ]] && \
-		words=$(cd ${portdir}/metadata/cache; compgen ${prepend} -G "*/*" | ${sedcmd})
+	    words=$(builtin cd ${portdir} ; compgen ${prepend} -X "!*-*" -S '/' -G "${cur}*")
+	    [[ $(echo "${words}" | wc -w) = 1 ]] && \
+		words=$(builtin cd ${portdir}/metadata/cache; compgen ${prepend} -G "*/*")
 	fi
 
 	COMPREPLY=($(echo "${words}" | ${grepcmd}))
@@ -128,16 +128,16 @@ _pkgname()
 	# if all else fails, try to complete on the package name w/o the category
 	if [[ -z "${COMPREPLY}" ]]; then
 	    if [[ -n "${ver}" ]] ; then
-		words="$(cd ${portdir}/metadata/cache ; for i in */${cur}* ; \
+		words="$(builtin cd ${portdir}/metadata/cache ; for i in */${cur}* ; \
 		    do [[ -d $i ]] && echo ${i##*/} ; done)"
 	    else
-		words="$(cd ${portdir} ; for i in [a-z]*-[a-z0-9]*/${cur}* ; \
+		words="$(builtin cd ${portdir} ; for i in [a-z]*-[a-z0-9]*/${cur}* ; \
 		    do [[ -d $i ]] && echo ${i##*/} ; done)"
 	    fi
 	    COMPREPLY=($(compgen ${prepend} -W "${words}" -- ${cur}))
 	    if [[ ${#COMPREPLY[@]} -le 1  && -n "${ver}" ]]; then
 		# Now complete on the specific versions.
-		words="$(cd ${portdir}/metadata/cache; for i in */${cur}*; do echo ${i##*/}; done)"
+		words="$(builtin cd ${portdir}/metadata/cache; for i in */${cur}*; do echo ${i##*/}; done)"
 		COMPREPLY=($(compgen ${prepend} -W '${words}' -- "${cur}"))
 	    fi
 	fi
@@ -310,11 +310,11 @@ _emerge()
 #        grepcmd="grep -E ^$cur.*"
         if [[ -n "${cur}" ]]; then
 #            if [[ "${cur}" == */* ]] ; then
-#                words=$(cd /var/db/pkg; compgen -G "${cur}*")
+#                words=$(builtin cd /var/db/pkg; compgen -G "${cur}*")
 #            else
-#                words=$(cd /var/db/pkg; compgen -S '/' -G "${cur}*")
+#                words=$(builtin cd /var/db/pkg; compgen -S '/' -G "${cur}*")
 #                [[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ]] && \
-#                    words=$(cd /var/db/pkg; compgen -G "*/*")
+#                    words=$(builtin cd /var/db/pkg; compgen -G "*/*")
 #            fi
 #            COMPREPLY=($(echo "${words}" | ${grepcmd}))
 
@@ -325,7 +325,7 @@ _emerge()
             fi
 
         else
-            words=$(cd /var/db/pkg; compgen -X '!*-*' -S '/' -G "${cur}*")
+            words=$(builtin cd /var/db/pkg; compgen -X '!*-*' -S '/' -G "${cur}*")
             COMPREPLY=($(echo "${words}"))
         fi
         return 0
@@ -341,29 +341,29 @@ _emerge()
             _pkgname -A -C $cond $cur
             
 #            if [[ "${cur}" == */* ]]; then
-#                COMPREPLY=($(cd ${portdir}; compgen ${prepend} -G "${cur}*" -- "${cur}"))
+#                COMPREPLY=($(builtin cd ${portdir}; compgen ${prepend} -G "${cur}*" -- "${cur}"))
 #                 Complete on the specific versions (if appropriate).
 #                [[ ${#COMPREPLY[@]} -le 1 ]] && \
-#                    COMPREPLY=($(cd ${portdir}/metadata/cache ; \
+#                    COMPREPLY=($(builtin cd ${portdir}/metadata/cache ; \
 #                        compgen ${prepend} -G "${cur}*" -- "${cur}"))
 #            else
-#                COMPREPLY=($(cd ${portdir}; compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}"))
+#                COMPREPLY=($(builtin cd ${portdir}; compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}"))
 #                [[ ${#COMPREPLY[@]} = 1 ]] && \
-#                    COMPREPLY=($(cd ${portdir}; compgen ${prepend} -G "${cur}*/*" -- "${cur}"))
+#                    COMPREPLY=($(builtin cd ${portdir}; compgen ${prepend} -G "${cur}*/*" -- "${cur}"))
 #            fi
 	else
-	    words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]* ; do [[ -d $i ]] && echo ${i}; done)"
+	    words="$(builtin cd ${portdir}; for i in [a-z]*-[a-z0-9]* ; do [[ -d $i ]] && echo ${i}; done)"
 	    COMPREPLY=($(compgen -W '${words}' -- "${cur}"))
 	fi
         
 	# If all else fails, try to complete on package names without the
 	# category being specified. Neato!
 #        if [[ -z "${COMPREPLY}" ]]; then
-#            words="$(cd ${portdir} ; for i in [a-z]*-[a-z0-9]*/${cur}* ; do [[ -d $i ]] && echo ${i##*/}; done)"
+#            words="$(builtin cd ${portdir} ; for i in [a-z]*-[a-z0-9]*/${cur}* ; do [[ -d $i ]] && echo ${i##*/}; done)"
 #            COMPREPLY=($(compgen ${prepend} -W "${words}" -- ${cur}))
 #            if [[ ${#COMPREPLY[@]} -le 1 ]]; then
 #                 Now complete on the specific versions.
-#                words="$(cd ${portdir}/metadata/cache; for i in */${cur}*; do echo ${i##*/}; done)"
+#                words="$(builtin cd ${portdir}/metadata/cache; for i in */${cur}*; do echo ${i##*/}; done)"
 #                COMPREPLY=($(compgen ${prepend} -W '${words}' -- "${cur}"))
 #            fi
 #        fi
@@ -409,22 +409,22 @@ _emerge()
 	    COMPREPLY=''
 	    return 0
         elif [[ "${cur}" == */* ]] ; then
-	    words=$(cd ${portdir}; compgen -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
+	    words=$(builtin cd ${portdir}; compgen -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
 	else
-	    words=$(cd ${portdir}; compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
+	    words=$(builtin cd ${portdir}; compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
 	    [[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ]] && \
-		words=$(cd ${portdir}; compgen -G "*/*" | ${sedcmd})"${sysactions}""${eactions}"
+		words=$(builtin cd ${portdir}; compgen -G "*/*" | ${sedcmd})"${sysactions}""${eactions}"
 	fi
 	COMPREPLY=($(echo "${words}" | ${grepcmd}))
     else
-	words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*; do [[ -d $i ]] && echo $i; done)""${sysactions}""${eactions}"
+	words="$(builtin cd ${portdir}; for i in [a-z]*-[a-z0-9]*; do [[ -d $i ]] && echo $i; done)""${sysactions}""${eactions}"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
     
     # If all else fails, try to complete on package names without the
     # category being specified. Neato!
     if [[ -z "${COMPREPLY}" ]]; then
-	words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [[ -d $i ]] && echo ${i##*/}; done)"
+	words="$(builtin cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [[ -d $i ]] && echo ${i##*/}; done)"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
 
@@ -970,7 +970,7 @@ _equery()
 		esac
 		# Are we completing a category?
 	    elif [[ ${prev} == "-c" || ${prev} == "--category" ]]; then
-		COMPREPLY=($(cd ${portdir}/metadata/cache; compgen -W "$(compgen -G '*')" -- $cur))
+		COMPREPLY=($(builtin cd ${portdir}/metadata/cache; compgen -W "$(compgen -G '*')" -- $cur))
 	    fi
 	    ;;
 	@(u?(ses)|w?(hich)))
