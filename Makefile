@@ -18,11 +18,11 @@ dist:
 	rm -fr "$(distpkg)/"
 	@echo "success."
 
-dist-sign:
+dist-sign: dist
 	gpg --armour --detach-sign "$(distpkg).tar.bz2"
 	mv "$(distpkg).tar.bz2.asc" "$(distpkg).tar.bz2.signature"
 
-dist-upload: dist dist-sign
+dist-upload: dist-sign
 	echo -ne "user anonymous gentoo-bashcomp\ncd incoming\nput $(distpkg).tar.bz2\nput $(distpkg).tar.bz2.signature\nbye" | \
 		ftp -n ftp.berlios.de
 	@echo "uploaded."
