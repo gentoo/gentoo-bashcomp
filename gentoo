@@ -6,25 +6,34 @@
 # Distributed under the terms of the GNU General Public License, v2 or later
 
 #
-# Retrieve PORTDIR location from user's make.conf or, if it is not defined
-# there, from make.globals.
+# Retrieve PORTDIR/PORTDIR_OVERLAY location from user's make.conf or, if it
+# is not defined there, from make.globals.
 #
 _portdir()
 {
     sed -n -e '/^PORTDIR=/ { s/^[^=]\+="\?\([^"]\+\|\S\+\).*/\1/p ; q }' \
-        /etc/make.conf /etc/make.globals
+        /etc/make.{conf,globals}
+
+    if [[ $1 == '-o' ]] ; then
+        sed -n -e '/^PORTDIR_OVERLAY=/ { s/^[^=]\+="\?\([^"]\+\|\S\+\).*/\1/p ; q }' \
+            /etc/make.conf
+    fi
 }
 
 # like _pkgname but completes on package names only (no category)
 _pkgname_only()
 {
-    local i
-    local dir="$1"
-    local cur="$2"
+    local i pd
+    local cur="$1"
+    shift
+    local dir="$@"
 
     COMPREPLY=($(compgen -W "$(\
-        builtin cd ${dir}; for i in *-*/${cur}*; do \
-            [[ -d ${i} ]] && { local x=${i##*/} ; echo ${x%-[0-9]*}; } \
+        for pd in $dir ; do \
+            builtin cd ${pd}; \
+            for i in *-*/${cur}*; do \
+                [[ -d ${i} ]] && { local x=${i##*/} ; echo ${x%-[0-9]*}; } \
+            done ; \
         done)" -- ${cur}))
 }
 
@@ -45,7 +54,7 @@ _pkgname()
     local mode cur portdir only
     mode="$1"
     cur="$2"
-    portdir=$(_portdir)
+    portdir=$(_portdir -o)
     # Ignore '=' at the beginning of the current completion
     [[ ${cur:1:1} == "=" ]] && cur=${cur:2}
     [[ ${cur:0:1} == "=" ]] && cur=${cur:1}
@@ -65,7 +74,7 @@ _pkgname()
 
             if [[ -z "${COMPREPLY}" ]] ; then
                 only=1
-                _pkgname_only /var/db/pkg ${cur}
+                _pkgname_only ${cur} /var/db/pkg
             fi
 	    ;;
 	-A)
@@ -73,23 +82,46 @@ _pkgname()
 	    if [[ $cur == */* ]]; then
 	        # Once the category has been completed, it's safe to use ${portdir}
 	        # to continue completion.
-	        COMPREPLY=($(builtin cd ${portdir}; compgen -W "$(compgen -G "${cur}*")" -- "${cur}"))
+                COMPREPLY=($(\
+                    for pd in ${portdir} ; do \
+                        builtin cd ${pd}; \
+                        compgen -W "$(compgen -G "${cur}*")" -- "${cur}" ; \
+                    done))
 	        # When we've completed most of the name, also display the version for
 	        # possible completion.
 	        if [[ ${#COMPREPLY[@]} -le 1 || ${cur:${#cur}-1:1} == "-" ]] && [[ ${cur} != */ ]]; then
 		    # The portage cache is appropriate to complete specific versions from.
-		    COMPREPLY=(${COMPREPLY[@]} $(builtin cd ${portdir}/metadata/cache; compgen -W "$(compgen -G "${cur}*")" -- "${cur}"))
+		    COMPREPLY=(${COMPREPLY[@]} $(\
+                        for pd in ${portdir} ; do \
+                            if [[ -d ${pd}/metadata/cache ]] ; then \
+                                builtin cd ${pd}/metadata/cache; \
+                                compgen -W "$(compgen -G "${cur}*")" --
+                                "${cur}" ; \
+                            fi ; \
+                        done))
 	        fi
 	    else
-		COMPREPLY=($(compgen -W "$(builtin cd ${portdir}/metadata/cache; compgen -G "$cur*" -S /)" -- $cur))
+		COMPREPLY=( $(compgen -W "$(\
+                    for pd in ${portdir} ; do \
+                        if [[ -d ${pd}/metadata/cache ]] ; then
+                            builtin cd ${pd}/metadata/cache; \
+                            compgen -G "$cur*" -S / ; \
+                        fi ; \
+                    done)" -- $cur) )
                 if [[ ${#COMPREPLY[@]} == 1 ]]; then
-		    COMPREPLY=($(compgen -W "$(builtin cd ${portdir}/metadata/cache; compgen -G "$COMPREPLY*")" -- $cur))
+		    COMPREPLY=($(compgen -W "$(\
+                    for pd in ${portdir} ; do \
+                        if [[ -d ${pd}/metadata/cache ]] ; then
+                            builtin cd ${pd}/metadata/cache; \
+                            compgen -G "$COMPREPLY*" ; \
+                        fi ; \
+                    done)" -- $cur))
 	        fi
 	    fi
 
             if [[ -z "${COMPREPLY}" ]] ; then
                 only=1
-                _pkgname_only ${portdir} ${cur}
+                _pkgname_only ${cur} ${portdir}
             fi
 	    ;;
 	*)
@@ -114,7 +146,7 @@ _emerge()
     local words grepcmd sedcmd stopre stophere i
     local action actionpos actionre sysactions eactions pkgpos
     local version_mode searchdesc_mode help_mode resume_mode
-    local portdir=$(_portdir)
+    local portdir=$(_portdir -o)
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     numwords=${#COMP_WORDS[*]}
@@ -262,7 +294,7 @@ _emerge()
 	    COMPREPLY=($(echo "${words}"))
 	fi
 
-        [[ -z "${COMPREPLY}" ]] && _pkgname_only /var/db/pkg ${cur}
+        [[ -z "${COMPREPLY}" ]] && _pkgname_only ${cur} /var/db/pkg
         return 0
     fi
 	
@@ -275,28 +307,77 @@ _emerge()
     if [[ -n "${cond}" ]]; then
 	if [[ -n "${cur}" ]]; then
 	    if [[ "${cur}" == */* ]]; then
-		COMPREPLY=($(cd ${portdir}; compgen ${prepend} -G "${cur}*" -- "${cur}"))
+		COMPREPLY=($(\
+                    for pd in ${portdir} ; do \
+                        builtin cd ${pd}; compgen ${prepend} -G "${cur}*" -- "${cur}" ; \
+                    done))
 		# Complete on the specific versions (if appropriate).
 		[[ ${#COMPREPLY[@]} -le 1 ]] && \
-		    COMPREPLY=($(cd ${portdir}/metadata/cache; compgen ${prepend} -G "${cur}*" -- "${cur}"))
+		    COMPREPLY=($(\
+                        for pd in ${portdir} ; do \
+                            if [[ -d ${pd}/metadata/cache ]] ; then
+                                builtin cd ${pd}/metadata/cache; \
+                                compgen ${prepend} -G "${cur}*" -- "${cur}" ; \
+                            fi ; \
+                        done))
 	    else
-		COMPREPLY=($(cd ${portdir}; compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}"))
-		[[ ${#COMPREPLY[@]} = 1 ]] && \
-		    COMPREPLY=($(cd ${portdir}; compgen ${prepend} -G "${cur}*/*" -- "${cur}"))
-	    fi
+#                local p=$(_portdir)
+#                COMPREPLY=($(builtin cd ${p}; compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}"))
+#                [[ ${#COMPREPLY[@]} = 1 ]] && \
+#                    COMPREPLY=($(builtin cd ${p}; compgen ${prepend} -G "${cur}*/*" -- "${cur}"))
+                words="$(\
+                    for pd in ${portdir} ; do \
+                        builtin cd ${pd} ; \
+                        compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}" ; \
+                    done)"
+
+                local w
+                for x in words ; do
+                    w="${x}\n${w}"
+                done
+
+                COMPREPLY=($(echo -e ${w} | uniq))
+                [[ ${#COMPREPLY[@]} = 1 ]] && \
+                    COMPREPLY=($(\
+                        for pd in ${portdir} ; do \
+                            builtin cd ${pd} ; \
+                            compgen ${prepend} -G "${cur}*/*" -- "${cur}" ; \
+                        done))
+                    
+            fi
 	else
-	    words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*; do [ -d $i ] && echo $i; done)"
+	    words="$(\
+                for pd in ${portdir} ; do \
+                    builtin cd ${pd}; \
+                    for i in [a-z]*-[a-z0-9]*; do \
+                        [[ -d $i ]] && echo $i ; \
+                    done ; \
+                done)"
 	    COMPREPLY=($(compgen -W '${words}' -- "${cur}"))
 	fi
 		
         # If all else fails, try to complete on package names without the
 	# category being specified.
 	if [[ -z "${COMPREPLY}" ]]; then
-	    words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [ -d $i ] && echo ${i##*/}; done)"
+	    words="$(\
+                for pd in ${portdir} ; do \
+                    builtin cd ${pd}; \
+                    for i in [a-z]*-[a-z0-9]*/${cur}*; do \
+                        [[ -d $i ]] && echo ${i##*/}; \
+                    done ; \
+                done)"
 	    COMPREPLY=($(compgen ${prepend} -W "${words}" -- ${cur}))
 	    if [[ ${#COMPREPLY[@]} -le 1 ]]; then
 		# Now complete on the specific versions.
-		words="$(cd ${portdir}/metadata/cache; for i in */${cur}*; do echo ${i##*/}; done)"
+		words="$(\
+                    for pd in ${portdir} ; do \
+                        if [[ -d ${pd}/metadata/cache ]] ; then \
+                            builtin cd ${pd}/metadata/cache; \
+                            for i in */${cur}*; do \
+                                echo ${i##*/}; \
+                            done ; \
+                        fi ; \
+                    done)"
 		COMPREPLY=($(compgen ${prepend} -W '${words}' -- "${cur}"))
 	    fi
 	fi
@@ -344,22 +425,58 @@ _emerge()
 	    COMPREPLY=''
             return 0
 	elif [[ "${cur}" == */* ]] ; then
-	    words=$(cd ${portdir}; compgen -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
+	    words=$(\
+                for pd in ${portdir} ; do \
+                    builtin cd ${pd}; \
+                    compgen -G "${cur}*" | ${sedcmd} ; \
+                done)"${sysactions}""${eactions}"
 	else
-	    words=$(cd ${portdir}; compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
-	    [ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
-		words=$(cd ${portdir}; compgen -G "*/*" | ${sedcmd})"${sysactions}""${eactions}"
-	fi
+#            p=$(_portdir)
+#            words=$(builtin cd ${p}; compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
+#            [ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
+#                words=$(builtin cd ${p} ; compgen -G "*/*" | ${sedcmd})"${sysactions}""${eactions}"
+
+            local ww=$(\
+                for pd in ${portdir} ; do \
+                    builtin cd ${pd} ; \
+                    compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd} ; \
+                done)"${sysactions}""${eactions}"
+
+            local w
+            for x in ${ww} ; do
+                w="${x}\n${w}"
+            done
+
+            words=$(echo -e ${w} | uniq)
+            [ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
+                words=$(\
+                    for pd in ${portdir} ; do \
+                        builtin cd ${pd} ; \
+                        compgen -G "*/*" | ${sedcmd} ; \
+                    done)"${sysactions}""${eactions}"
+        fi
 	COMPREPLY=($(echo "${words}" | ${grepcmd}))
     else
-	words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*; do [ -d $i ] && echo $i; done)""${sysactions}""${eactions}"
+	words="$(\
+            for pd in ${portdir} ; do \
+                builtin cd ${pd}; \
+                for i in [a-z]*-[a-z0-9]*; do \
+                    [[ -d $i ]] && echo $i; \
+                done ; \
+            done)""${sysactions}""${eactions}"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
 
     # If all else fails, try to complete on package names without the
-    # category being specified. Neato!
+    # category being specified.
     if [[ -z "${COMPREPLY}" ]]; then
-        words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [ -d $i ] && echo ${i##*/}; done)"
+        words="$(\
+            for pd in ${portdir} ; do \
+                builtin cd ${pd}; \
+                for i in [a-z]*-[a-z0-9]*/${cur}*; do \
+                    [[ -d $i ]] && echo ${i##*/}; \
+                done ; \
+            done)"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
 
