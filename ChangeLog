@@ -1,1 +1,10 @@
-Place holder
+20050207 ka0ttic (Release)
+    * Added _pkgname_only() to complete only on package names (no categories).
+    Both emerge -C and equery can now take advantage of this and do not only
+    complete on cat/pkg.
+    * Updated gcc-config completion to actually complete on the compiler (eg.
+    i686-pc-linux-gnu-4.0.0).
+    * Added webapp-config completion.
+    * Added portageq completion.
+    * Added short command support for equery, so that something like "equery b
+    <TAB>" would be treated as 'equery belongs <TAB>'.
