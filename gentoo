@@ -75,11 +75,12 @@ _pkgname()
 		done
 		words="${wordtmp}"
 	    fi
+
 	# complete on category
 	else
-	    words=$(cd /var/db/pkg; compgen ${prepend} -S '/' -G "${cur}*")
+	    words=$(cd /var/db/pkg; compgen -S '/' -G "${cur}*")
             [[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ]] && \
-                words=$(cd /var/db/pkg; compgen -G "*/*")
+                words=$(cd /var/db/pkg; compgen ${prepend} -G "*/*")
 	fi
 
 	COMPREPLY=($(echo "${words}" | ${grepcmd}))
@@ -110,7 +111,11 @@ _pkgname()
 
 	# category already specified
 	if [[ "${cur}" == */* ]] ; then
-	    words=$(cd ${portdir} ; compgen ${prepend} -G "${cur}*" | ${sedcmd})
+	    if [[ -n "${ver}" ]] ; then
+		words=$(cd ${portdir}/metadata/cache ; compgen ${prepend} -G "${cur}*")
+	    else
+		words=$(cd ${portdir} ; compgen ${prepend} -G "${cur}*" | ${sedcmd})
+	    fi
 	# complete on category
 	else
 	    words=$(cd ${portdir} ; compgen ${prepend} -X "!*-*" -S '/' -G "${cur}*" | \
@@ -141,7 +146,7 @@ _pkgname()
 
     # This function is easily debuggable from the command-line.
     # Just set the DEBUG variable in your environment and run _pkgname
-    # as intented.
+    # as intended.
     if [[ -n "${DEBUG}" ]] ; then
 	local x
 	for x in ${COMPREPLY[@]} ; do echo ${x} ; done
@@ -150,7 +155,6 @@ _pkgname()
     
     return 0
 }
-
 
 ##############################################################################
 # package-specific completion functions
@@ -298,6 +302,10 @@ _emerge()
 	return 0
     fi
 
+    # Check for conditional.
+    cond="${cur%%[A-Za-z0-9]*}"
+    cur="${cur:${#cond}}"
+    
     # Complete on installed packages when unmerging.
     if [[ "${action}" == 'unmerge' ]]; then
 #        grepcmd="grep -E ^$cur.*"
@@ -311,7 +319,11 @@ _emerge()
 #            fi
 #            COMPREPLY=($(echo "${words}" | ${grepcmd}))
 
-            _pkgname -I -V $cur
+            if [[ -n "${cond}" ]] ; then
+                _pkgname -I -C $cond $cur
+            else
+                _pkgname -I -V $cur
+            fi
 
         else
             words=$(cd /var/db/pkg; compgen -X '!*-*' -S '/' -G "${cur}*")
@@ -320,9 +332,7 @@ _emerge()
         return 0
     fi
     
-    # Check for conditional.
-    cond="${cur%%[A-Za-z0-9]*}"
-    cur="${cur:${#cond}}"
+
 #    [[ "${cond:0:1}" == "'" ]] && prepend="-P ${cond:1}"
     
     # Handle cases where a conditional is specified.
@@ -879,19 +889,20 @@ _equery()
     # Find out what we're currently doing here.
     j=0
     for i in "${COMP_WORDS[@]}"; do
-	if [[ ${j} -lt ${COMP_CWORD} ]]; then
+	if [ $j -lt $COMP_CWORD ]; then
 	    j=$((j + 1))
-	    case "${i}" in @(belongs|ch@(anges|eck)|dep@(ends|graph)|files|glsa|list|s@(ize|tats)|uses|which|hasuse))
-		mode=${i}
-		;;
+	    case $i in
+                @(belongs|ch@(anges|eck)|dep@(ends|graph)|files|glsa|list|s@(ize|tats)|uses|which|hasuse|b|c|k|d|g|f|a|h|l|s|t|u|w))
+		    mode=$i
+		    ;;
 	    esac
 	fi
     done
     # Now get to work.
-    case "${mode}" in
+    case $mode in
 	GLOBAL)
 	    # Complete commands and global options.
-	    case "${cur}" in
+	    case $cur in
 		-*)
 		    COMPREPLY=($(compgen -W "-q --quiet -C --nocolor -h --help -V --version" -- $cur))
 		    ;;
@@ -900,30 +911,30 @@ _equery()
 		    ;;
 	    esac
 	    ;;
-	changes|glsa|stats)
+	c?(hanges)|a|glsa|t|stats)
 	    # These commands have not been implemented in 'equery' yet ...
 	    echo -n "# Not implemented! "
 	    ;;
-	files)
+	f?(iles))
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
-		case "${cur}" in
+		case $cur in
 		    -*)
-			COMPREPLY=($(compgen -W "--timestamp --md5sum --type" -- $cur))
+		        COMPREPLY=($(compgen -W "--timestamp --md5sum --type" -- $cur))
 			;;
 		    *)
 			# Only installed packages can have their files listed.
 			_pkgname -I $cur
 			;;
-		esac
+		    esac
 	    fi
-	    ;;
-	list)
+			;;
+	l?(ist))
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
-		case "${cur}" in
+		case $cur in
 		    -*)
 			COMPREPLY=($(compgen -W "-i --installed -I --exclude-installed -p --portage-tree -o --overlay-tree" -- $cur))
 			;;
@@ -934,48 +945,48 @@ _equery()
 		esac
 	    fi
 	    ;;
-	belongs)
+	b?(elongs))
 	    # Only complete if the previous entry on the command line is not
 	    # a file name.
 	    if \
-		[[ \
-		    ${prev} == ${mode} || \
-		    ${prev:0:1} == "-" || \
-		    ${COMP_WORDS[COMP_CWORD-2]} == "-c" || \
-		    ${COMP_WORDS[COMP_CWORD-2]} == "--category" \
+	        [[ \
+		${prev} == ${mode} || \
+		${prev:0:1} == "-" || \
+		${COMP_WORDS[COMP_CWORD-2]} == "-c" || \
+		${COMP_WORDS[COMP_CWORD-2]} == "--category" \
 		]] && \
 		[[ \
 		    ${prev} != "-c" && \
 		    ${prev} != "--category" \
 		]]
 	    then
-		case "${cur}" in
+		case $cur in
 		    -*)
 			COMPREPLY=($(compgen -W "-c --category -e --earlyout" -- $cur))
 			;;
 		    *)
-			# Complete filenames. Function defined in /etc/bash_completion.
-			_filedir
+                        COMPREPLY=($(compgen -f -- $cur) \
+                            $(compgen -d -S '/' -- $cur))
 			;;
 		esac
 		# Are we completing a category?
-		elif [[ ${prev} == "-c" || ${prev} == "--category" ]]; then
-		    COMPREPLY=($(cd ${portdir}/metadata/cache; compgen -W "$(compgen -G '*')" -- $cur))
-		fi
+	    elif [[ ${prev} == "-c" || ${prev} == "--category" ]]; then
+		COMPREPLY=($(cd ${portdir}/metadata/cache; compgen -W "$(compgen -G '*')" -- $cur))
+	    fi
 	    ;;
-	uses|which)
+	@(u?(ses)|w?(hich)))
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
 	    if [[ ${prev} == ${mode} ]]; then
-	        # Complete on all package names.
+		# Complete on all package names.
 		_pkgname -A $cur
 	    fi
 	    ;;
-	depgraph)
+	g|depgraph)
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
-		case "${cur}" in
+		case $cur in
 		    -*)
 			COMPREPLY=($(compgen -W "-U --no-useflags -l --linear" -- $cur))
 			;;
@@ -986,43 +997,44 @@ _equery()
 		esac
 	    fi
 	    ;;
-	depends)
+	d?(epends))
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
-		case "${cur}" in
+		case $cur in
 		    -*)
 			COMPREPLY=($(compgen -W "-a --all-packages -d --direct -D --indirect" -- $cur))
 			;;
 		    *)
-		        case "${prev}" in
+			case $prev in
 			    -a|--all-packages)
-			        # Complete on all package names.							
-			        _pkgname -A $cur
+				# Complete on all package names.							
+				_pkgname -A $cur
 				;;
 			    *)
-				# Complete on installed package names.
+			        # Complete on installed package names.
 				_pkgname -I $cur
 				;;
-	    		esac
+
+			esac
 		esac
 	    fi
 	    ;;
-	check)
+	k|check)
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
-	    if [[ ${prev} == ${mode} ]]; then
+	    if [[ "${prev}" == "${mode}" ]]; then
 		# Only installed packages can have their integrity verified.
 		_pkgname -I $cur
 	    fi
 	    ;;
-	size)
+	s?(ize))
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
-	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
-	        case "${cur}" in
+	    if [[ "${prev}" == "${mode}" || "${prev:0:1}" == "-" ]]; then
+		case $cur in
 		    -*)
-			COMPREPLY=($(compgen -W "-b --bytes" -- $cur))
+		        COMPREPLY=($(compgen -W "-b --bytes" -- $cur))
 			;;
 		    *)
 			# Only installed packages can have their size calculated.
@@ -1031,27 +1043,27 @@ _equery()
 		esac
 	    fi
 	    ;;
-	hasuse)
+	h?(asuse))
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
-	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
-		case "${cur}" in
+	    if [[ "${prev}" == "${mode}" || "${prev:0:1}" == "-" ]]; then
+		case $cur in
 		    -*)
 			COMPREPLY=($(compgen -W "-i --installed -I --exclude-installed -p --portage-tree -o --overlay" -- $cur))
 			;;
 		    *)
-		        local glob loc
+			local glob loc
 			glob=$(sed -n -e 's/^\([^ ]\+\) - .*$/\1/p' ${portdir}/profiles/use.desc)
 			loc=$(sed -n -e 's/^[^ ]\+:\([^ ]*\) - .*$/\1/p' ${portdir}/profiles/use.local.desc)
 			COMPREPLY=($(compgen -W "$glob $loc" -- $cur))
 			;;
 		esac
 	    fi
-	;;
+	    ;;
     esac
     return 0
 }
-complete -F _equery -o filenames equery
+complete -F _equery equery
 }
 
 #
