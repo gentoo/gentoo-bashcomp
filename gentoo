@@ -123,7 +123,7 @@ _emerge()
     
     # Test for action.
     action=$(echo "${compwords}" | egrep -o --regex="${actionre}" | tr -d ' ')
-    if [[ "${action}" ]]; then
+    if [[ -n "${action}" ]]; then
 	for ((i = 0; i < ${numwords}; i++ )); do
 	    if [[ "${COMP_WORDS[${i}]}" == "${action}" ]]; then
 		actionpos=${i}
@@ -147,7 +147,7 @@ _emerge()
 		break
 	    fi
 	done
-	[[ "${pkgpos}" ]] || pkgpos=${numwords}
+	[[ -z "${pkgpos}" ]] && pkgpos=${numwords}
     fi
     
     # Check for special cases.
@@ -156,26 +156,26 @@ _emerge()
     help_mode=$(echo "${compwords}" | egrep -o --regexp=" -(h|-help)\b")
     
     # Handle special cases.
-    if [[ "${action}" = 'search' ]] || [[ "${searchdesc_mode}" ]] || \
-        [[ "${version_mode}" ]] || [[ "${action}" = 'metadata' ]]; then
+    if [[ "${action}" = 'search' ]] || [[ -n "${searchdesc_mode}" ]] || \
+        [[ -n "${version_mode}" ]] || [[ "${action}" = 'metadata' ]]
+    then
 	unset COMPREPLY
 	return 0
-    elif [[ "${help_mode}" ]]; then
+    elif [[ -n "${help_mode}" ]] ; then
 	unset COMPREPLY
-	[ ${curword} -eq 2 ] && COMPREPLY=($(compgen -W 'config sync system' -- ${cur}))
+	[[ ${curword} -eq 2 ]] && COMPREPLY=($(compgen -W 'config sync system' -- ${cur}))
 	return 0
     fi
     
     # Complete on options.
-    if [[ "${cur}" == -* ]]; then
+    if [[ "${cur}" == -* ]] ; then
 	# If a resume option was specified, it needs special handling.
 	resume_mode=$(echo "${compwords}" | egrep -o --regexp=" --(resume|skipfirst)\b")
-	if [[ "${resume_mode}" ]]; then
-	    if [[ "${cur}" == --* ]]; then
+	if [[ -n "${resume_mode}" ]] ; then
+	    if [[ "${cur}" == --* ]] ; then
 		opts="--ask --pretend --resume --skipfirst"
-	    elif [[ "${cur}" == -* ]]; then
-		[[ -z $(echo "${compwords}" | egrep -o --regexp="--(ask|pretend)\b") ]] && \
-                    opts="-a -p"
+	    elif [[ "${cur}" == -* ]] ; then
+		[[ -z $(echo "${compwords}" | egrep -o --regexp="--(ask|pretend)\b") ]] && opts="-a -p"
 	    fi
 	elif [[ "${cur}" == --* ]]; then
 	    # Complete on long options.
@@ -195,7 +195,7 @@ _emerge()
 		--update --upgradeonly --usepkg --usepkgonly \
 		--verbose \
                 --info"
-	    if [ ${curword} -eq 1 ] && [ ${numwords} -eq 2 ]; then
+	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]]; then
 	        opts="${opts} --help --resume --searchdesc --version"
 	    fi
 	elif [[ "${cur}" == -* ]]; then
@@ -204,7 +204,7 @@ _emerge()
 	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]]; then
 		opts="${opts} -h -S -V"
 	    fi
-	    if [[ -z "${action}" ]] && [ ${curword} -eq $((pkgpos - 1)) ]; then
+	    if [[ -z "${action}" ]] && [[ ${curword} -eq $((pkgpos - 1)) ]]; then
 		opts="${opts} -C -P -c -i -s"
 	    fi
 	fi
@@ -231,7 +231,7 @@ _emerge()
     
     # Stop completion if a special case is encountered.
     stophere=$(echo "${compwords}" | egrep -o --regex="${stopre}")
-    if [[ "${stophere}" ]]; then
+    if [[ -n "${stophere}" ]]; then
 	unset COMPREPLY
 	return 0
     fi
@@ -245,7 +245,7 @@ _emerge()
     # Complete on installed packages when unmerging.
     if [[ "${action}" == 'unmerge' ]]; then
         grepcmd="grep -E ^$cur.*"
-        if [ "${cur}" ]; then
+        if [[ -n "${cur}" ]]; then
             if [[ "${cur}" == */* ]] ; then
                 words=$(cd /var/db/pkg; compgen -G "${cur}*")
             else
@@ -272,8 +272,8 @@ _emerge()
     [[ "${cond:0:1}" == "'" ]] && prepend="-P ${cond:1}"
     
     # Handle cases where a conditional is specified.
-    if [[ "${cond}" ]]; then
-	if [[ "${cur}" ]]; then
+    if [[ -n "${cond}" ]]; then
+	if [[ -n "${cur}" ]]; then
 	    if [[ "${cur}" == */* ]]; then
 		COMPREPLY=($(cd ${portdir}; compgen ${prepend} -G "${cur}*" -- "${cur}"))
 		# Complete on the specific versions (if appropriate).
@@ -292,7 +292,7 @@ _emerge()
         
 	# If all else fails, try to complete on package names without the
 	# category being specified. Neato!
-	if [[ ! "${COMPREPLY}" ]]; then
+	if [[ -z "${COMPREPLY}" ]]; then
 	    words="$(cd ${portdir} ; for i in [a-z]*-[a-z0-9]*/${cur}* ; do [[ -d $i ]] && echo ${i##*/}; done)"
 	    COMPREPLY=($(compgen ${prepend} -W "${words}" -- ${cur}))
 	    if [[ ${#COMPREPLY[@]} -le 1 ]]; then
@@ -308,7 +308,7 @@ _emerge()
     grepcmd="grep -E ^${cur}.*"
     sedcmd="sed -e :^[^-]*$:d"
     if [[ ${COMP_CWORD} -eq 1 ]]; then
-	if [[ $numwords -le 2 ]]; then
+	if [[ ${numwords} -le 2 ]]; then
 	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"$'\n'"metadata"
 	else
 	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"
@@ -332,10 +332,10 @@ _emerge()
 	    sysactions=''
 	fi
     fi
-    if [[ ! "${action}" ]] && [[ ${curword} -le ${pkgpos} ]]; then
+    if [[ -z "${action}" ]] && [[ ${curword} -le ${pkgpos} ]]; then
 	eactions=$'\n'"clean"$'\n'"depclean"$'\n'"inject"$'\n'"prune"$'\n'"regen"$'\n'"search"$'\n'"unmerge"
     fi
-    if [[ "${cur}" ]]; then
+    if [[ -n "${cur}" ]]; then
 	# Handle absolute paths.
 	# Thanks to Ed Catmur <ed@catmur.co.uk> for pointing this out and
 	# submitting the patch.
@@ -357,7 +357,7 @@ _emerge()
     
     # If all else fails, try to complete on package names without the
     # category being specified. Neato!
-    if [[ ! "${COMPREPLY}" ]]; then
+    if [[ -z "${COMPREPLY}" ]]; then
 	words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [[ -d $i ]] && echo ${i##*/}; done)"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
@@ -415,10 +415,10 @@ _gentoo_style_init()
 	&& [[ "${script}" != *.sh ]] \
 	&& [[ "$(head -n 1 "${script}")" = "#!/sbin/runscript" ]]; then
 	
-        [[ $COMP_CWORD -gt 1 ]] && return 1
+        [[ ${COMP_CWORD} -gt 1 ]] && return 1
 	COMPREPLY=($(opts="start stop status restart pause zap ineed needsme iuse usesme broken"; \
             eval "$(grep '^opts=' "${script}")"; echo "${opts}"))
-	[[ "$COMPREPLY" ]] || COMPREPLY=(start stop restart zap)
+	[[ -z "$COMPREPLY" ]] && COMPREPLY=(start stop restart zap)
 	    COMPREPLY=($(compgen -W "${COMPREPLY[*]}" -- "${cur}"))
     else
 	COMPREPLY=($(compgen -o default -- "${cur}"))
@@ -493,7 +493,9 @@ _rcupdate()
 	if [[ "${COMP_WORDS[1]}" == "show" ]] || [[ "${COMP_WORDS[1]}" == "-s" ]]; then
 	    show="TRUE"
 	fi
-	if ([ $COMP_CWORD -eq 3 ] && [ ! "$show" ]) || ([ $COMP_CWORD -eq 2 ] && [ "$show" ]); then
+	if ([[ $COMP_CWORD -eq 3 ]] && [ -z "$show" ]) || ([[ $COMP_CWORD -eq 2 ]] && \
+            [[ -n "$show" ]])
+        then
 	    COMPREPLY=($(compgen -W "$(for i in /etc/runlevels/*; do echo ${i##*/}; done)" -- $cur))
 	elif [[ $COMP_CWORD -eq 2 ]] ; then
 	    COMPREPLY=($(compgen -X "*.@(c|sh|test)" -W "$(for i in /etc/init.d/*; do echo ${i##*/}; done)" $cur))
@@ -648,7 +650,7 @@ _javaconfig()
 		fi
 		
                 for arg in ${args}; do
-		    [[ "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
+		    [[ -n "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
 		done
 
 		COMPREPLY=($(compgen $nospace -W "${opts}"))
@@ -670,7 +672,7 @@ _javaconfig()
                     
 		    for arg in ${args} ; do
 			if [[ "${arg:0:${#spec}}" == "${spec}" ]]; then
-			    [[ "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
+			    [[ -n "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
 			fi
 		    done
                     
@@ -685,28 +687,28 @@ _javaconfig()
 		    else
 			spec="${cur##--set-user-classpath=}"
 		    fi
-		    if [[ "${multiplepkgs}" ]]; then
+		    if [[ -n "${multiplepkgs}" ]]; then
 			pkgs="${spec%,*}"
 			spec="${spec##*,}"
 		    fi
-		    if [[ "${multiplepkgs}" ]]; then
+		    if [[ -n "${multiplepkgs}" ]]; then
 			for arg in ${args} ; do
 			    if [[ "${spec}" ]]; then
 				if [[ "${arg:0:${#spec}}" == "${spec}" ]] \
 				    && [[ ! $(echo "${cur}" | egrep -o "(=|,)${arg},") ]]; then
-				    [[ "${opts}" ]] && opts="${opts} ${pkgs},${arg}" || opts="${pkgs},${arg}"
+				    [[ -n "${opts}" ]] && opts="${opts} ${pkgs},${arg}" || opts="${pkgs},${arg}"
 				fi
 			    else
 				if [[ ! $(echo "${cur}" | egrep -o "(=|,)${arg},") ]]; then
-				    [[ "${opts}" ]] && opts="${opts} ${pkgs},${arg}" || opts="${pkgs},${arg}"
+				    [[ -n "${opts}" ]] && opts="${opts} ${pkgs},${arg}" || opts="${pkgs},${arg}"
 				fi
 			    fi
 			done
 			    [[ "${opts}" == "${pkgs},${spec}" ]] && opts=""
 		    else
 			for arg in ${args} ; do
-			    if [[ "${spec}" ]] && [[ "${arg:0:${#spec}}" == "${spec}" ]]; then
-				[[ "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
+			    if [[ -n "${spec}" ]] && [[ "${arg:0:${#spec}}" == "${spec}" ]]; then
+				[[ -n "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
 			    fi
 			done
 			[[ "${opts}" == "${spec}" ]] && opts=""
@@ -717,7 +719,7 @@ _javaconfig()
 		    spec=${cur##--exec=}
 		    for arg in ${execopts} ; do
 		        if [[ "${arg:0:${#spec}}" == "${spec}" ]]; then
-			    [[ "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
+			    [[ -n "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
 			fi
 		    done
 			[[ "${opts}" == "${spec}" ]] && opts=""
@@ -793,7 +795,7 @@ _browserconfig()
 	COMPREPLY=($(compgen -W "$(for i in /usr/share/browser-config/*; do [ -f $i ] && echo ${i##*/}; done)" $cur))
     elif [[ "${prev}" == "-m" ]]; then
         COMPREPLY=($(compgen -W "same_window new_window new_tab new_browser" -- ${cur}))
-	if [[ ! "${COMPREPLY}" ]]; then
+	if [[ -z "${COMPREPLY}" ]]; then
 	    COMPREPLY=''
 	fi
     else
@@ -1065,7 +1067,7 @@ _portageq() {
 	  portdir_overlay \
 	  distdir"
     
-    if [ $COMP_CWORD -eq 1 ]; then
+    if [[ $COMP_CWORD -eq 1 ]] ; then
 	# would always be correct, but it's pretty slow...
 	#COMPREPLY=($(compgen -W "$(portageq | grep '^   [[:lower:]]' | \
 	#    sed -e 's/^.*[[:space:]]\([[:lower:]_]\+\)[[:space:]].*$/\1/')" \
