@@ -246,11 +246,11 @@ _emerge()
     if [[ "${action}" == 'unmerge' ]]; then
         grepcmd="grep -E ^$cur.*"
         if [ "${cur}" ]; then
-            if [ $(echo "${cur}" | grep '/') ]; then
+            if [[ "${cur}" == */* ]] ; then
                 words=$(cd /var/db/pkg; compgen -G "${cur}*")
             else
                 words=$(cd /var/db/pkg; compgen -S '/' -G "${cur}*")
-                [ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
+                [[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ]] && \
                     words=$(cd /var/db/pkg; compgen -G "*/*")
             fi
             COMPREPLY=($(echo "${words}" | ${grepcmd}))
@@ -342,7 +342,7 @@ _emerge()
 	if [[ "${cur} " == @('/'|'.'|'~'|'$')* ]]; then
 	    COMPREPLY=''
 	    return 0
-	elif [[ $(echo "${cur}" | grep '/') ]]; then
+        elif [[ "${cur}" == */* ]] ; then
 	    words=$(cd ${portdir}; compgen -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
 	else
 	    words=$(cd ${portdir}; compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
