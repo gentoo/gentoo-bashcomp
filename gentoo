@@ -130,10 +130,6 @@ _pkgname()
 	# complete on category
 	else
             complete_category /var/db/pkg
-#            words=$(builtin cd /var/db/pkg; compgen -S '/' -G "${cur}*")
-#            [[ $(echo "${words}" | wc -w) = 1 ]] && \
-#                words=$(builtin cd /var/db/pkg; compgen ${prepend} -G "*/*")
-#            COMPREPLY=($(echo "${words}" | ${grepcmd}))
 	fi
 
 	# if all else fails, try to complete on the package name w/o the category
@@ -152,11 +148,7 @@ _pkgname()
 	    fi
 	# complete on category
 	else
-#            complete_category ${portdir}/metadata/cache
-            words=$(builtin cd ${portdir} ; compgen ${prepend} -X "!*-*" -S '/' -G "${cur}*")
-	    [[ $(echo "${words}" | wc -w) = 1 ]] && \
-		words=$(builtin cd ${portdir}/metadata/cache; compgen ${prepend} -G "*/*")
-            COMPREPLY=($(echo "${words}" | ${grepcmd}))
+            complete_category ${portdir}/metadata/cache
 	fi
 
 	# if all else fails, try to complete on the package name w/o the category
