@@ -125,7 +125,7 @@ _emerge()
     opts=''
     # Test for action.
     action=$(echo "${compwords}" | egrep -o --regex="${actionre}" | tr -d ' ')
-    if [[ "${action}" ]]; then
+    if [[ -n "${action}" ]]; then
 	for ((i = 0; i < ${numwords}; i++ )); do
 	    if [[ "${COMP_WORDS[${i}]}" == "${action}" ]]; then
 		actionpos=${i}
@@ -158,32 +158,31 @@ _emerge()
     help_mode=$(echo "${compwords}" | egrep -o --regexp=" -(h|-help)\b")
 	    
     # Handle special cases.
-    if [[ "${action}" = 'search' ]] || [[ -n "${searchdesc_mode}" ]] || \
-        [[ -n "${version_mode}" ]] || [[ "${action}" = 'metadata' ]]
+    if [[ "${action}" = 'search' ]] || [[ "${searchdesc_mode}" ]] || \
+        [[ "${version_mode}" ]] || [[ "${action}" = 'metadata' ]]
     then
-	unset COMPREPLY
+        unset COMPREPLY
 	return 0
     elif [[ -n "${help_mode}" ]]; then
-        unset COMPREPLY
+	unset COMPREPLY
 	[[ ${curword} -eq 2 ]] && COMPREPLY=($(compgen -W 'config sync system' -- ${cur}))
 	return 0
     fi
 	    
     # Complete on options.
     if [[ "${cur}" == -* ]]; then
-	# If a resume option was specified, it needs special handling.
+        # If a resume option was specified, it needs special handling.
 	resume_mode=$(echo "${compwords}" | egrep -o --regexp=" --(resume|skipfirst)\b")
-	
-        if [[ -n "${resume_mode}" ]]; then
+	if [[ -n "${resume_mode}" ]]; then
 	    if [[ "${cur}" == --* ]]; then
-	        opts="--ask --pretend --resume --skipfirst"
+		opts="--ask --pretend --resume --skipfirst"
 	    elif [[ "${cur}" == -* ]]; then
 		[[ -z $(echo "${compwords}" | egrep -o --regexp=" --(ask|pretend)\b") ]] && opts="-a -p"
 	    fi
-        elif [[ "${cur}" == --* ]]; then
+	elif [[ "${cur}" == --* ]]; then
 	    # Complete on long options.
 	    opts="--ask --autoclean \
-	        --buildpkg --buildpkgonly \
+		--buildpkg --buildpkgonly \
 		--changelog --clean --columns \
 		--debug --deep \
 		--emptytree \
@@ -197,25 +196,25 @@ _emerge()
 		--tree \
 		--update --upgradeonly --usepkg --usepkgonly \
 		--verbose"
-	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]]; then
+	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
 		opts="${opts} --help --resume --searchdesc --version"
 	    fi
 	elif [[ "${cur}" == -* ]]; then
 	    # Complete on short options.
 	    opts="-B -D -G -K -O -U -a -b -d -e -f -g -k -l -n -o -p -q -t -u -v"
-	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]]; then
+	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
 		opts="${opts} -h -S -V"
 	    fi
-	    if [[ -z "${action}" ]] && [[ ${curword} -eq $((pkgpos - 1)) ]]; then
-	        opts="${opts} -C -P -c -i -s"
+	    if [[ -z "${action}" ]] && [[ ${curword} -eq $((pkgpos - 1)) ]] ; then
+		opts="${opts} -C -P -c -i -s"
 	    fi
 	fi
 		    
         # Generate the reply.
-	COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
-		    
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+	
         # NOTE: This slows things down!
-	# (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
+        # (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
 	# This removes any options from the list of completions that have
 	# already been specified on the command line.
 	COMPREPLY=($(echo "${COMP_WORDS[@]}" | \
@@ -229,88 +228,90 @@ _emerge()
 		COMPREPLY=(${COMPREPLY/ ${i%% *} / })
 	    done
 	    echo ${COMPREPLY[@]})))
+
 	return 0
     fi
 	
     # Stop completion if a special case is encountered.
     stophere=$(echo "${compwords}" | egrep -o --regex="${stopre}")
     if [[ -n "${stophere}" ]]; then
-	unset COMPREPLY
+        unset COMPREPLY
+	return 0
+    fi
+
+    # Complete on filenames if given a path.
+    if [[ "${cur} " == @('/'|'.'|'~'|'$')* ]]; then
+	COMPREPLY=($(compgen -G "${cur}*"))
 	return 0
     fi
 	
-    # Complete on filenames if given a path.
-#    if [[ "${cur} " == @('/'|'.'|'~'|'$')* ]]; then
-#        COMPREPLY=($(compgen -G "${cur}*"))
-#        return 0
-#    fi
-
     # Complete on installed packages when unmerging.
     if [[ "${action}" == 'unmerge' ]]; then
         grepcmd="grep -E ^$cur.*"
-	if [[ -n "${cur}" ]]; then
+	if [[ -n "${cur}" ]] ; then
 	    if [[ "${cur}" == */* ]]; then
-		words=$(builtin cd /var/db/pkg; compgen -G "${cur}*")
+		words=$(cd /var/db/pkg; compgen -G "${cur}*")
 	    else
-		words=$(builtin cd /var/db/pkg; compgen -S '/' -G "${cur}*")
-		[[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ]] && \
-		    words=$(builtin cd /var/db/pkg; compgen -G "*/*")
+		words=$(cd /var/db/pkg; compgen -S '/' -G "${cur}*")
+		[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
+		    words=$(cd /var/db/pkg; compgen -G "*/*")
 	    fi
 	    COMPREPLY=($(echo "${words}" | ${grepcmd}))
 	else
-	    words=$(builtin cd /var/db/pkg; compgen -X '!*-*' -S '/' -G "${cur}*")
+	    words=$(cd /var/db/pkg; compgen -X '!*-*' -S '/' -G "${cur}*")
 	    COMPREPLY=($(echo "${words}"))
 	fi
 
         [[ -z "${COMPREPLY}" ]] && _pkgname_only /var/db/pkg ${cur}
-	return 0
+        return 0
     fi
 	
     # Check for conditional.
     cond="${cur%%[A-Za-z0-9]*}"
     cur="${cur:${#cond}}"
     [[ "${cond:0:1}" == "'" ]] && prepend="-P ${cond:1}"
+    
     # Handle cases where a conditional is specified.
     if [[ -n "${cond}" ]]; then
 	if [[ -n "${cur}" ]]; then
 	    if [[ "${cur}" == */* ]]; then
-		COMPREPLY=($(builtin cd ${portdir}; compgen ${prepend} -G "${cur}*" -- "${cur}"))
+		COMPREPLY=($(cd ${portdir}; compgen ${prepend} -G "${cur}*" -- "${cur}"))
 		# Complete on the specific versions (if appropriate).
 		[[ ${#COMPREPLY[@]} -le 1 ]] && \
-		    COMPREPLY=($(builtin cd ${portdir}/metadata/cache; compgen ${prepend} -G "${cur}*" -- "${cur}"))
+		    COMPREPLY=($(cd ${portdir}/metadata/cache; compgen ${prepend} -G "${cur}*" -- "${cur}"))
 	    else
-		COMPREPLY=($(builtin cd ${portdir}; compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}"))
+		COMPREPLY=($(cd ${portdir}; compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}"))
 		[[ ${#COMPREPLY[@]} = 1 ]] && \
-		    COMPREPLY=($(builtin cd ${portdir}; compgen ${prepend} -G "${cur}*/*" -- "${cur}"))
+		    COMPREPLY=($(cd ${portdir}; compgen ${prepend} -G "${cur}*/*" -- "${cur}"))
 	    fi
 	else
-	    words="$(builtin cd ${portdir}; for i in [a-z]*-[a-z0-9]*; do [ -d $i ] && echo $i; done)"
+	    words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*; do [ -d $i ] && echo $i; done)"
 	    COMPREPLY=($(compgen -W '${words}' -- "${cur}"))
 	fi
-	
+		
         # If all else fails, try to complete on package names without the
 	# category being specified.
 	if [[ -z "${COMPREPLY}" ]]; then
-	    words="$(builtin cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [ -d $i ] && echo ${i##*/}; done)"
+	    words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [ -d $i ] && echo ${i##*/}; done)"
 	    COMPREPLY=($(compgen ${prepend} -W "${words}" -- ${cur}))
 	    if [[ ${#COMPREPLY[@]} -le 1 ]]; then
 		# Now complete on the specific versions.
-	        words="$(builtin cd ${portdir}/metadata/cache; for i in */${cur}*; do echo ${i##*/}; done)"
+		words="$(cd ${portdir}/metadata/cache; for i in */${cur}*; do echo ${i##*/}; done)"
 		COMPREPLY=($(compgen ${prepend} -W '${words}' -- "${cur}"))
 	    fi
 	fi
 	return 0
     fi
-    
+	
     # Complete on packages.
     grepcmd="grep -E ^${cur}.*"
     sedcmd="sed -e :^[^-]*$:d"
-    if [[ ${COMP_CWORD} -eq 1 ]]; then
-        if [[ $numwords -le 2 ]]; then
+    if [[ ${COMP_CWORD} -eq 1 ]] ; then
+	if [[ $numwords -le 2 ]]; then
 	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"$'\n'"metadata"
 	else
 	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"
-        fi
+	fi
     else
 	# Only allow these actions if no packages have been specified.
 	#
@@ -324,39 +325,41 @@ _emerge()
 	#
 	#            emerge -a sys-kernel/gentoo-dev-sources
 	#
+	
         if [[ ! " ${compwords} " == *" "*[/]*" "* ]]; then
 	    sysactions=$'\n'"system"$'\n'"world"
 	else
 	    sysactions=''
-        fi
+	fi
     fi
-    if [[ ! "${action}" ]] && [ ${curword} -le ${pkgpos} ]; then
-	eactions=$'\n'"clean"$'\n'"depclean"$'\n'"inject"$'\n'"prune"$'\n'"regen"$'\n'"search"$'\n'"unmerge"
+	
+    if [[ -z "${action}" ]] && [[ ${curword} -le ${pkgpos} ]] ; then
+        eactions=$'\n'"clean"$'\n'"depclean"$'\n'"inject"$'\n'"prune"$'\n'"regen"$'\n'"search"$'\n'"unmerge"
     fi
-    if [[ -z "${cur}" ]]; then
+    if [[ -n "${cur}" ]] ; then
 	# Handle absolute paths.
 	# Thanks to Ed Catmur <ed@catmur.co.uk> for pointing this out and
 	# submitting the patch.
 	if [[ "${cur} " == @('/'|'.'|'~'|'$')* ]]; then
 	    COMPREPLY=''
-	    return 0
-	elif [[ $(echo "${cur}" | grep '/') ]]; then
-	    words=$(builtin cd ${portdir}; compgen -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
+            return 0
+	elif [[ "${cur}" == */* ]] ; then
+	    words=$(cd ${portdir}; compgen -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
 	else
-	    words=$(builtin cd ${portdir}; compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
-	    [[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ]] && \
-		words=$(builtin cd ${portdir}; compgen -G "*/*" | ${sedcmd})"${sysactions}""${eactions}"
+	    words=$(cd ${portdir}; compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
+	    [ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
+		words=$(cd ${portdir}; compgen -G "*/*" | ${sedcmd})"${sysactions}""${eactions}"
 	fi
 	COMPREPLY=($(echo "${words}" | ${grepcmd}))
     else
-        words="$(builtin cd ${portdir}; for i in [a-z]*-[a-z0-9]*; do [ -d $i ] && echo $i; done)""${sysactions}""${eactions}"
+	words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*; do [ -d $i ] && echo $i; done)""${sysactions}""${eactions}"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
-	
+
     # If all else fails, try to complete on package names without the
-    # category being specified.
+    # category being specified. Neato!
     if [[ -z "${COMPREPLY}" ]]; then
-	words="$(builtin cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [ -d $i ] && echo ${i##*/}; done)"
+        words="$(cd ${portdir}; for i in [a-z]*-[a-z0-9]*/${cur}*; do [ -d $i ] && echo ${i##*/}; done)"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
 
