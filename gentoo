@@ -1025,7 +1025,7 @@ _ekeyword()
 	    COMPREPLY=( $( compgen -W "${archl_r}" -- $cur ) )
 	    ;;
 	*)
-	    if [ ${COMP_CWORD} -eq 1 ] ; then
+	    if [[ ${COMP_CWORD} -eq 1 ]] ; then
 		COMPREPLY=( $(compgen -W "${archl_s}" -- $cur ) )
 	    else
 		COMPREPLY=( $( compgen -W "${archl_s}" -- $cur ) )
