@@ -143,7 +143,7 @@ have emerge && {
 _emerge()
 {
     local c cur curword numwords compwords opts cond prepend
-    local words stopre stophere i
+    local words stopre stophere i x
     local action actionpos actionre sysactions eactions pkgpos
     local version_mode searchdesc_mode help_mode resume_mode
     local portdir=$(_portdir -o)
@@ -152,14 +152,21 @@ _emerge()
     numwords=${#COMP_WORDS[*]}
     curword=${COMP_CWORD}
     compwords="${COMP_WORDS[*]}"
-    actionre=' (-[CPcis]|(metadata|s(y(nc|stem)|earch)|regen|(unmerg|prun)e|world|((dep)?clean)|(in(fo|ject))))\b'
-    stopre=' (depclean|info|metadata|regen|sy(nc|stem)|world|--(resume|s(kipfirst|ync)))\b'
+    actionre=' @(-[CPcis]|@(metadata|s@(y@(nc|stem)|earch)|regen|@(unmerg|prune)e|world|@(@(dep)@(clean)|@(in@(fo|ject)))))'
+    stopre=' @(depclean|info|metadata|regen|sy@(nc|stem)|world|--@(resume|s@(kipfirst|ync)))'
     opts=''
-    # Test for action.
-    action=$(echo "${compwords}" | egrep -o --regex="${actionre}" | tr -d ' ')
+
+    # find action
+    for x in ${compwords} ; do
+        if [[ ${x} == ${actionre} ]] ; then
+            action=${x}
+            break
+        fi
+    done
+
     if [[ -n "${action}" ]]; then
 	for ((i = 0; i < ${numwords}; i++ )); do
-	    if [[ "${COMP_WORDS[${i}]}" == "${action}" ]]; then
+	    if [[ ${COMP_WORDS[${i}]} == "${action}" ]]; then
 		actionpos=${i}
 		pkgpos=$((actionpos + 1))
 		break
@@ -185,13 +192,13 @@ _emerge()
     fi
 	    
     # Check for special cases.
-    version_mode=$(echo "${compwords}" | egrep -o -regexp=" -(V|-version)\b")
-    searchdesc_mode=$(echo "${compwords}" | egrep -o --regexp=" -(S|-searchdesc)\b")
-    help_mode=$(echo "${compwords}" | egrep -o --regexp=" -(h|-help)\b")
+    [[ ${compwords} == *-@(V|-version)* ]] && version_mode=1
+    [[ ${compwords} == *-@(S|-searchdesc)* ]] && searchdesc_mode=1
+    [[ ${compwords} == *-@(h|-help)* ]] && help_mode=1
 	    
     # Handle special cases.
-    if [[ "${action}" = 'search' ]] || [[ "${searchdesc_mode}" ]] || \
-        [[ "${version_mode}" ]] || [[ "${action}" = 'metadata' ]]
+    if [[ "${action}" == 'search' ]] || [[ -n "${searchdesc_mode}" ]] || \
+        [[ -n "${version_mode}" ]] || [[ "${action}" == 'metadata' ]]
     then
         unset COMPREPLY
 	return 0
@@ -204,12 +211,14 @@ _emerge()
     # Complete on options.
     if [[ "${cur}" == -* ]]; then
         # If a resume option was specified, it needs special handling.
-	resume_mode=$(echo "${compwords}" | egrep -o --regexp=" --(resume|skipfirst)\b")
-	if [[ -n "${resume_mode}" ]]; then
+        [[ ${compwords} == *--@(resume|skipfirst)* ]] && resume_mode=1
+	
+        if [[ -n "${resume_mode}" ]]; then
 	    if [[ "${cur}" == --* ]]; then
 		opts="--ask --pretend --resume --skipfirst"
 	    elif [[ "${cur}" == -* ]]; then
-		[[ -z $(echo "${compwords}" | egrep -o --regexp=" --(ask|pretend)\b") ]] && opts="-a -p"
+                [[ ${compwords} == *--@(ask|pretend)* ]] && ask_premode=1
+                [[ -n "${ask_premode}" ]] && opts="-a -p"
 	    fi
 	elif [[ "${cur}" == --* ]]; then
 	    # Complete on long options.
@@ -242,7 +251,6 @@ _emerge()
 	    fi
 	fi
 		    
-        # Generate the reply.
         COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
 	
         # NOTE: This slows things down!
@@ -265,8 +273,7 @@ _emerge()
     fi
 	
     # Stop completion if a special case is encountered.
-    stophere=$(echo "${compwords}" | egrep -o --regex="${stopre}")
-    if [[ -n "${stophere}" ]]; then
+    if [[ ${compwords} == *${stopre}* ]] ; then
         unset COMPREPLY
 	return 0
     fi

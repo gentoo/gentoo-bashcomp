@@ -6,6 +6,8 @@
 	'category/metadata.xml'.
 	* Fixed cases where quoting and a condition (">= fex) failed to
 	complete properly.
+	* Converted all extended regular expressions to bash extglobs in
+	_emerge.  ***NO*** external calls exist anymore :)
 
 2005-03-22 Aaron Walker <ka0ttic@gentoo.org>
 
