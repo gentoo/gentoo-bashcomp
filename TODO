@@ -1,0 +1,118 @@
+# -*- shell-script -*-
+#
+# Gentoo Linux command completion -- FEATURES (COMMANDS) TO BE ADDED.
+#
+# $Id: TODO,v 1.3 2004/06/03 01:04:41 zorder Exp $
+#
+# Copyright 1999-2004 Gentoo Technologies, Inc.
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# etcat completion command
+#
+have etcat && {
+_etcat()
+{
+	# -b </path/to/file> [category]
+	# belongs </path/to/file> [category]
+	#   Searches for the package which a file belongs to with an option
+	#   to restrict a search to a single or multiple category. Wildcards
+	#   in the category name is accepted to speed up searching.
+	#   (eg.  etcat  belongs  /usr/lib/libmpeg.so "media-*")
+	# 
+	# -c <package[-version]>
+	# changes <package[-version]>
+	#   Outputs ChangeLog entry for the package and version specified.
+	#   Uses the latest package version if none specified.
+	# 
+	# -d <regex expression>
+	# depends <regex expression>
+	#   Searches through portage for a dependency string satisfying that
+	#   regular expression.
+	# 
+	# -f <package[-version]>
+	# files <package[-version]>
+	#   Lists all the files installed for this package.
+	# 
+	# -s <package>
+	# size <package>
+	#   Outputs the installed size of the package.
+	# 
+	# -u <package[-version]>
+	# uses <package[-version]>
+	#   Outputs the USE flags supported by this package and also their
+	#   installed state and description.
+	# 
+	# -v <package>
+	# versions <package>
+	#   Output all the versions for packages that match the package name
+	#   given with indication of whether the packages is stable, masked,
+	#   unstable or installed.
+	
+}
+complete -F _etcat etcat
+}
+
+# epm completion command
+#
+have epm && {
+_epm()
+{
+
+}
+complete -F _epm epm
+}
+
+#
+# euse completion command
+#
+have euse && {
+_euse()
+{
+# DESCRIPTION
+#  euse is used to set(disable/enable) USE flags /etc/make.conf without having to edit the file directly. It is also used to
+#  get detail information about use flags like description, status of flags(enabled/disabled),  type  of  flag(global/local)
+#  etc.  It can also be queried for viewing the current use flag settings in /etc/make.conf, /etc/make.defaults and environ-
+#  ment.
+# OPTIONS
+#  -c, --conf
+#         Print the USE flag setting in /etc/make.conf
+#  -d, --defaults
+#         Print the USE flag setting in /etc/make.profile/make.defaults
+#  -e, --env
+#         Print the USE flag setting in environment
+#  -E, --enable
+#         Enables USE flag(s) in make.conf. It accepts one or more USE flags  space  separted  as  parameters.  Please  read
+#         README for all the different cases it handles.
+#  -D, --disable
+#         Disables  USE  flag(s)  in  make.conf.  Puts  a  '-'  sign  infront  of the use flag and appends to USE setting of
+#         make.conf. It accepts one or more USE flags space separted as parameters. Please read README for all the different
+#         cases it handles.
+#  -i, --info
+#         Prints  detail  information about the USE flag(s). If no arguments are given then all the USE flag(global & local)
+#         information is printed. If one or more arguments are given(space separated) then information of only  those  flags
+#         are printed.
+#         The output is in the following format:
+#         alpha         [-] [ ] [G] indicates that architecture ...
+#         moznocompose  [+] [C] [L] [net-www/mozilla] : If you  ...
+#         The column descriptions are:
+#         flag_name
+#                name of the use flag
+#         flag_status
+#                indicates whether the USE flag is enabled or disabled. - indicates disabled, + indicates enabled.
+#         flag_location
+#                indicates  where  the USE flag is enabled or disabled.  C indicates make.conf, D indicates make.defaults, E
+#                indicates environment.
+#         flag_type
+#                indicates if the flag is global USE flag or a local USE flag.If it is local USE flag, then the  description
+#                column begins with the package which it belongs to in square brackets. See moznocompose example above.
+#         description
+#                gives a short description of the USE flag
+#  -h, --help
+#         Show the help message listing all the available flags and a short description
+#  -v, --version
+#         Show the version information
+
+}
+complete -F _euse euse
+}
