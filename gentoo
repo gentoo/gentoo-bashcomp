@@ -20,9 +20,9 @@ _portdir()
         /etc/make.conf /etc/make.globals
 }
 
-# This function completes package names.
+# universal package completion function
 #
-# usage: pkgname <options> <current-directory>
+# usage: _pkgname <options> <current-directory>
 #
 # Where options is one of:
 #   -A  Search all available packages (except for those in the overlays)
