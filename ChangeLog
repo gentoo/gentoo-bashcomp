@@ -1,3 +1,10 @@
+2005-03-29 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Removed all occurrences of $grepcmd and $sedcmd from _emerge.
+	* Added metadata.xml to the list of excludes when completing on
+	category/package, so that _emerge won't complete on
+	'category/metadata.xml'.
+
 2005-03-22 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Update _ebuild commands.

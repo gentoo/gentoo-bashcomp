@@ -143,7 +143,7 @@ have emerge && {
 _emerge()
 {
     local cur curword numwords compwords opts cond prepend
-    local words grepcmd sedcmd stopre stophere i
+    local words stopre stophere i
     local action actionpos actionre sysactions eactions pkgpos
     local version_mode searchdesc_mode help_mode resume_mode
     local portdir=$(_portdir -o)
@@ -272,26 +272,33 @@ _emerge()
     fi
 
     # Complete on filenames if given a path.
-    if [[ "${cur} " == @('/'|'.'|'~'|'$')* ]]; then
-	COMPREPLY=($(compgen -G "${cur}*"))
-	return 0
-    fi
+#    if [[ "${cur} " == @('/'|'.'|'~'|'$')* ]]; then
+#        COMPREPLY=($(compgen -G "${cur}*"))
+#        return 0
+#    fi
 	
     # Complete on installed packages when unmerging.
     if [[ "${action}" == 'unmerge' ]]; then
-        grepcmd="grep -E ^$cur.*"
 	if [[ -n "${cur}" ]] ; then
 	    if [[ "${cur}" == */* ]]; then
-		words=$(cd /var/db/pkg; compgen -G "${cur}*")
+		words=$(builtin cd /var/db/pkg; compgen -G "${cur}*")
 	    else
-		words=$(cd /var/db/pkg; compgen -S '/' -G "${cur}*")
-		[ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
-		    words=$(cd /var/db/pkg; compgen -G "*/*")
+		words=$(builtin cd /var/db/pkg; compgen -S '/' -G "${cur}*")
+
+                local n=0
+                for i in ${words} ; do
+                    [[ ${i} == ${cur}* ]] && n=$((n+1))
+                done
+
+                if [[ ${n} -eq 1 ]] ; then
+                    words="$(builtin cd /var/db/pkg ; compgen -G "*-*/*")"
+                fi
 	    fi
-	    COMPREPLY=($(echo "${words}" | ${grepcmd}))
+            COMPREPLY=($(for i in ${words} ; do \
+                            [[ ${i} == ${cur}* ]] && echo ${i} ; \
+                        done))
 	else
-	    words=$(cd /var/db/pkg; compgen -X '!*-*' -S '/' -G "${cur}*")
-	    COMPREPLY=($(echo "${words}"))
+	    COMPREPLY=($(builtin cd /var/db/pkg ; compgen -S '/' -G "*-*"))
 	fi
 
         [[ -z "${COMPREPLY}" ]] && _pkgname_only ${cur} /var/db/pkg
@@ -301,12 +308,12 @@ _emerge()
     # Check for conditional.
     cond="${cur%%[A-Za-z0-9]*}"
     cur="${cur:${#cond}}"
-    [[ "${cond:0:1}" == "'" || "${cond:0:1}" == '"' ]] && prepend="-P ${cond:1}"
+    [[ ${cond:0:1} == "'" || ${cond:0:1} == '"' ]] && prepend="-P ${cond:1}"
     
     # Handle cases where a conditional is specified.
     if [[ -n "${cond}" ]]; then
 	if [[ -n "${cur}" ]]; then
-	    if [[ "${cur}" == */* ]]; then
+            if [[ ${cur} == */* ]]; then
                 if [[ ${cur} == *-[0-9]* ]] ; then
                     words="$(\
                         for pd in ${portdir} ; do \
@@ -315,16 +322,18 @@ _emerge()
                             local pkg="$(echo ${cur%-[0-9]*})" ; \
                             pkg="${pkg##*/}"
                             for x in ${cat}/${pkg}/*.ebuild ; do \
-                                [[ -f "${x}" ]] || continue ; \
+                                [[ -f ${x} ]] || continue ; \
                                 x="${x/${pkg}\/}" ; \
                                 echo "${x%*.ebuild}" ; \
                             done ; \
                         done)"
+
+#                    words=$(compgen ${prepend} -W "${words}" -- ${cur})
                 else
 		    words="$(\
                     for pd in ${portdir} ; do \
                         builtin cd ${pd}; \
-                        compgen ${prepend} -G "${cur}*" -- "${cur}" ; \
+                        compgen ${prepend} -G "${cur}*" -- ${cur} ; \
                     done)"
                 fi
 
@@ -333,8 +342,10 @@ _emerge()
                     w="${x}\n${w}"
                 done
 
-                COMPREPLY=($(echo -ne ${w} | sort | uniq))
-		        # Complete on the specific versions (if appropriate).
+                words=$(echo -ne ${w} | sort | uniq)
+                COMPREPLY=( ${words} )
+		
+                # Complete on the specific versions (if appropriate).
                 if [[ ${#COMPREPLY[@]} -le 1 ]] ; then
 		    COMPREPLY=($(\
                         for pd in ${portdir} ; do \
@@ -354,9 +365,9 @@ _emerge()
                             fi ; \
                         done))
                 else
-                    COMPREPLY=($(compgen -W "$(echo -ne ${w} | sort | uniq)" -- $cur))
+                    COMPREPLY=($(compgen -W "${words}" -- $cur))
                 fi
-	    else
+            else
                 words="$(\
                     for pd in ${portdir} ; do \
                         builtin cd ${pd} ; \
@@ -377,15 +388,13 @@ _emerge()
                         done))
                     
             fi
-	else
+        else
 	    words="$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd}; \
-                    for i in [a-z]*-[a-z0-9]*; do \
-                        [[ -d $i ]] && echo $i ; \
-                    done ; \
+                    compgen -G "*-*"; \
                 done)"
-	    COMPREPLY=($(compgen -W '${words}' -- "${cur}"))
+	    COMPREPLY=($(compgen -W "${words}" -- "${cur}"))
 	fi
 		
         # If all else fails, try to complete on package names without the
@@ -394,11 +403,13 @@ _emerge()
 	    words="$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd}; \
-                    for i in [a-z]*-[a-z0-9]*/${cur}*; do \
+                    for i in *-*/${cur}*; do \
                         [[ -d $i ]] && echo ${i##*/}; \
                     done ; \
                 done)"
+
 	    COMPREPLY=($(compgen ${prepend} -W "${words}" -- ${cur}))
+
 	    if [[ ${#COMPREPLY[@]} -le 1 ]]; then
 		# Now complete on the specific versions.
 		words="$(\
@@ -410,15 +421,13 @@ _emerge()
                             done ; \
                         fi ; \
                     done)"
-		COMPREPLY=($(compgen ${prepend} -W '${words}' -- "${cur}"))
+		COMPREPLY=($(compgen ${prepend} -W "${words}" -- "${cur}"))
 	    fi
 	fi
 	return 0
     fi
 	
     # Complete on packages.
-    grepcmd="grep -E ^${cur}.*"
-    sedcmd="sed -e :^[^-]*$:d"
     if [[ ${COMP_CWORD} -eq 1 ]] ; then
 	if [[ $numwords -le 2 ]]; then
 	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"$'\n'"metadata"
@@ -450,51 +459,44 @@ _emerge()
         eactions=$'\n'"clean"$'\n'"depclean"$'\n'"inject"$'\n'"prune"$'\n'"regen"$'\n'"search"$'\n'"unmerge"
     fi
     if [[ -n "${cur}" ]] ; then
-	# Handle absolute paths.
-	# Thanks to Ed Catmur <ed@catmur.co.uk> for pointing this out and
-	# submitting the patch.
-	if [[ "${cur} " == @('/'|'.'|'~'|'$')* ]]; then
-	    COMPREPLY=''
-            return 0
-	elif [[ "${cur}" == */* ]] ; then
+	if [[ "${cur}" == */* ]] ; then
 	    words=$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd}; \
-                    compgen -G "${cur}*" | ${sedcmd} ; \
+                    compgen -X "*metadata.xml" -G "${cur}*" ; \
                 done)"${sysactions}""${eactions}"
 	else
-#            p=$(_portdir)
-#            words=$(builtin cd ${p}; compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd})"${sysactions}""${eactions}"
-#            [ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
-#                words=$(builtin cd ${p} ; compgen -G "*/*" | ${sedcmd})"${sysactions}""${eactions}"
-
             local ww=$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd} ; \
-                    compgen -X "!*-*" -S '/' -G "${cur}*" | ${sedcmd} ; \
+                    compgen -S '/' -G "${cur}*"; \
                 done)"${sysactions}""${eactions}"
 
             local w
-            for x in ${ww} ; do
-                w="${x}\n${w}"
-            done
+            for x in ${ww} ; do w="${x}\n${w}" ; done
 
             words=$(echo -e ${w} | uniq)
-            [ $(echo "${words}" | ${grepcmd} | grep '/' | wc -l) = 1 ] && \
-                words=$(\
-                    for pd in ${portdir} ; do \
-                        builtin cd ${pd} ; \
-                        compgen -G "*/*" | ${sedcmd} ; \
-                    done)"${sysactions}""${eactions}"
+
+            local n=0
+            for i in ${words} ; do
+                [[ ${i} == ${cur}* ]] && n=$((n+1))
+            done
+
+            if [[ ${n} -eq 1 ]] ; then
+                words=$(for pd in ${portdir} ; do \
+                            builtin cd ${pd} ; \
+                            compgen -G "*-*/*" ; \
+                        done)"${sysactions}""${eactions}"
+            fi
         fi
-	COMPREPLY=($(echo "${words}" | ${grepcmd}))
+        COMPREPLY=($(for i in ${words} ; do \
+                        [[ ${i} == ${cur}* ]] && echo ${i} ; \
+                    done))
     else
-	words="$(\
+        words="$(\
             for pd in ${portdir} ; do \
-                builtin cd ${pd}; \
-                for i in [a-z]*-[a-z0-9]*; do \
-                    [[ -d $i ]] && echo $i; \
-                done ; \
+                builtin cd ${pd} ; \
+                compgen -S '/' -G "*-*" ; \
             done)""${sysactions}""${eactions}"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
