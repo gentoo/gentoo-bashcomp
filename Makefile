@@ -16,7 +16,7 @@ dist:
 	cp ChangeLog AUTHORS TODO COPYING "$(distpkg)/"
 	tar cjf "$(distpkg).tar.bz2" "$(distpkg)"
 	rm -fr "$(distpkg)/"
-	echo "success."
+	@echo "success."
 
 dist-sign:
 	gpg --armour --detach-sign "$(distpkg).tar.bz2"
@@ -25,4 +25,4 @@ dist-sign:
 dist-upload: dist dist-sign
 	echo -ne "user anonymous gentoo-bashcomp\ncd incoming\nput $(distpkg).tar.bz2\nput $(distpkg).tar.bz2.signature\nbye" | \
 		ftp -n ftp.berlios.de
-	echo "uploaded."
+	@echo "uploaded."
