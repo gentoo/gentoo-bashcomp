@@ -142,7 +142,7 @@ _pkgname()
 have emerge && {
 _emerge()
 {
-    local cur curword numwords compwords opts cond prepend
+    local c cur curword numwords compwords opts cond prepend
     local words stopre stophere i
     local action actionpos actionre sysactions eactions pkgpos
     local version_mode searchdesc_mode help_mode resume_mode
@@ -271,12 +271,6 @@ _emerge()
 	return 0
     fi
 
-    # Complete on filenames if given a path.
-#    if [[ "${cur} " == @('/'|'.'|'~'|'$')* ]]; then
-#        COMPREPLY=($(compgen -G "${cur}*"))
-#        return 0
-#    fi
-	
     # Complete on installed packages when unmerging.
     if [[ "${action}" == 'unmerge' ]]; then
 	if [[ -n "${cur}" ]] ; then
@@ -308,7 +302,13 @@ _emerge()
     # Check for conditional.
     cond="${cur%%[A-Za-z0-9]*}"
     cur="${cur:${#cond}}"
-    [[ ${cond:0:1} == "'" || ${cond:0:1} == '"' ]] && prepend="-P ${cond:1}"
+    if [[ ${cond:0:1} == "'" || ${cond:0:1} == '"' ]] ; then
+        prepend="-P ${cond:1}"
+        c="${cond:1}"
+    else
+        c="${cond}"
+    fi
+
     
     # Handle cases where a conditional is specified.
     if [[ -n "${cond}" ]]; then
@@ -320,20 +320,18 @@ _emerge()
                             builtin cd ${pd} ; \
                             local cat="${cur%/*}" ; \
                             local pkg="$(echo ${cur%-[0-9]*})" ; \
-                            pkg="${pkg##*/}"
+                            pkg="${pkg##*/}" ; \
                             for x in ${cat}/${pkg}/*.ebuild ; do \
                                 [[ -f ${x} ]] || continue ; \
                                 x="${x/${pkg}\/}" ; \
                                 echo "${x%*.ebuild}" ; \
                             done ; \
                         done)"
-
-#                    words=$(compgen ${prepend} -W "${words}" -- ${cur})
                 else
 		    words="$(\
                     for pd in ${portdir} ; do \
                         builtin cd ${pd}; \
-                        compgen ${prepend} -G "${cur}*" -- ${cur} ; \
+                        compgen -X "*metadata.xml" -G "${cur}*" -- ${cur} ; \
                     done)"
                 fi
 
@@ -356,16 +354,16 @@ _emerge()
                                 builtin cd ${pd} ; \
                                 local cat="${cur%/*}" ; \
                                 local pkg="$(echo ${cur%-[0-9]*}*)" ; \
-                                pkg="${pkg##*/}"
+                                pkg="${pkg##*/}" ; \
                                 for x in ${cat}/${pkg}/*.ebuild ; do \
                                     [[ -f "${x}" ]] || continue ; \
                                     x="${x/${pkg}\/}" ; \
-                                    echo "${x%*.ebuild}" ; \
+                                    echo "${c}${x%*.ebuild}" ; \
                                 done ; \
                             fi ; \
                         done))
                 else
-                    COMPREPLY=($(compgen -W "${words}" -- $cur))
+                    COMPREPLY=($(compgen ${prepend} -W "${words}" -- $cur))
                 fi
             else
                 words="$(\
@@ -386,7 +384,6 @@ _emerge()
                             builtin cd ${pd} ; \
                             compgen ${prepend} -G "${cur}*/*" -- "${cur}" ; \
                         done))
-                    
             fi
         else
 	    words="$(\
