@@ -37,9 +37,7 @@ _portdir()
 
 _pkgname()
 {
-    local ins all ver cond cur words prepend
-    local grepcmd sedcmd
-    local portdir=$(_portdir)
+    local ins all ver cond
 
     while [[ "$1" == -* ]] ; do
         case "$1" in
@@ -55,15 +53,19 @@ _pkgname()
         shift
     done
     
-    cur="$1"
-
+    local cur="$1"
+    local grepcmd="grep -E ^${cur}.*"
+    local sedcmd="sed -e :^[^-]*$:d"
+    local portdir=$(_portdir)
+    local prepend words
+    
+    # skip a single quote if specified with a condition
     if [[ -n "${cond}" ]] ; then
 	[[ "${cond:0:1}" == "'" ]] && prepend="-P ${cond:1}"
     fi
     
     # complete on installed packages only
     if [[ -n "${ins}" ]] ; then
-	grepcmd="grep -E ^$cur.*"
 	# category has been specified already
 	if [[ "${cur}" == */* ]] ; then
 	    words=$(cd /var/db/pkg; compgen ${prepend} -G "${cur}*")
@@ -106,9 +108,6 @@ _pkgname()
 
     # complete on all packages
     else
-	grepcmd="grep -E ^${cur}.*"
-	sedcmd="sed -e :^[^-]*$:d"
-
 	# category already specified
 	if [[ "${cur}" == */* ]] ; then
 	    if [[ -n "${ver}" ]] ; then
