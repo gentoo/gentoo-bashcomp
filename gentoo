@@ -5,6 +5,15 @@
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License, v2 or later
 
+# also defined in bash_completion proper however, will produce command
+# not found warnings when this is only enabled "locally" so we define it
+# here as well.
+have()
+{
+    unset -v have
+    PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin type $1 >&/dev/null && have="yes"
+}
+
 #
 # Retrieve PORTDIR/PORTDIR_OVERLAY location from user's make.conf or, if it
 # is not defined there, from make.globals.
