@@ -1,3 +1,12 @@
+2005-04-12 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Added etcat completion.
+
+2005-04-09 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Added have() so that it's possible for users to install the
+	completions "locally".
+
 2005-03-29 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Tagged 20050329 release.
