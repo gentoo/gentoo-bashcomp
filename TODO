@@ -7,52 +7,6 @@
 # Copyright 1999-2004 Gentoo Technologies, Inc.
 # Distributed under the terms of the GNU General Public License, v2 or later
 
-#
-# etcat completion command
-#
-have etcat && {
-_etcat()
-{
-	# -b </path/to/file> [category]
-	# belongs </path/to/file> [category]
-	#   Searches for the package which a file belongs to with an option
-	#   to restrict a search to a single or multiple category. Wildcards
-	#   in the category name is accepted to speed up searching.
-	#   (eg.  etcat  belongs  /usr/lib/libmpeg.so "media-*")
-	# 
-	# -c <package[-version]>
-	# changes <package[-version]>
-	#   Outputs ChangeLog entry for the package and version specified.
-	#   Uses the latest package version if none specified.
-	# 
-	# -d <regex expression>
-	# depends <regex expression>
-	#   Searches through portage for a dependency string satisfying that
-	#   regular expression.
-	# 
-	# -f <package[-version]>
-	# files <package[-version]>
-	#   Lists all the files installed for this package.
-	# 
-	# -s <package>
-	# size <package>
-	#   Outputs the installed size of the package.
-	# 
-	# -u <package[-version]>
-	# uses <package[-version]>
-	#   Outputs the USE flags supported by this package and also their
-	#   installed state and description.
-	# 
-	# -v <package>
-	# versions <package>
-	#   Output all the versions for packages that match the package name
-	#   given with indication of whether the packages is stable, masked,
-	#   unstable or installed.
-	
-}
-complete -F _etcat etcat
-}
-
 # epm completion command
 #
 have epm && {
