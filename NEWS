@@ -1,1 +1,17 @@
-Empty 'til release.
+This file contains a summary of changes in released versions. Please read the
+ChangeLog for a more detailed listing of changes/bug fixes.
+
+20050417:
+    New features:
+     - etcat completion
+
+    Bug fixes:
+     -  Fixed bug (#88797) that caused any package name matching "*-h*" to
+        be interpreted as -h|--help.
+     -  Fixed bug (#88799) that caused -Ca (or any other option after -C) to
+        not complete properly on only installed packages.
+     -  Fixed bug (#88152) that caused lack of filename completion after any
+        kind of redirect (> or <).
+     -  Fixed bug in conditional completion if the condition wasn't quoted
+        and the package being completed also has an ebuild in one of the
+        overlays.

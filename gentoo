@@ -151,19 +151,25 @@ _pkgname()
 have emerge && {
 _emerge()
 {
-    local c cur curword numwords compwords opts cond prepend
+    local c cur prev curword numwords compwords opts cond prepend
     local words stopre stophere i x
     local action actionpos actionre sysactions eactions pkgpos
     local version_mode searchdesc_mode help_mode resume_mode
     local portdir=$(_portdir -o)
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
     numwords=${#COMP_WORDS[*]}
     curword=${COMP_CWORD}
     compwords="${COMP_WORDS[*]}"
-    actionre='@(-[CPcis]|@(metadata|s@(y@(nc|stem)|earch)|regen|@(unmerg|prune)e|world|@(@(dep)@(clean)|@(in@(fo|ject)))))'
-    stopre=' @(depclean|info|metadata|regen|sy@(nc|stem)|world|--@(resume|s@(kipfirst|ync)))'
+    actionre='@(-?([A-Za-z]*)[CPcis]*|@(metadata|s@(y@(nc|stem)|earch)|regen|@(unmerg|prune)e|world|@(@(dep)@(clean)|@(in@(fo|ject)))))'
+    stopre=' @(?(--)depclean|?(--)info|?(--)metadata|regen|sy@(nc|stem)|world|--@(resume|s@(kipfirst|ync)))'
     opts=''
+
+    if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
+        COMPREPLY=($(compgen -f -- ${cur}))
+        return 0
+    fi
 
     # find action
     for x in ${compwords} ; do
@@ -181,13 +187,14 @@ _emerge()
 		break
 	    fi
 	done
-	if [[ ${#action} -eq 2 ]]; then
+        
+        if [[ ${action} == -* && ${action} != --* ]] ; then
 	    case "${action}" in
-		'-C') action='unmerge' ;;
-		'-P') action='prune' ;;
-		'-c') action='clean' ;;
-		'-i') action='inject' ;;
-		'-s') action='search' ;;
+		-*C*) action='unmerge' ;;
+		-*P*) action='prune' ;;
+		-*c*) action='clean' ;;
+		-*i*) action='inject' ;;
+		-*s*) action='search' ;;
 	    esac
 	fi
     else
@@ -201,9 +208,9 @@ _emerge()
     fi
 	    
     # Check for special cases.
-    [[ ${compwords} == *-@(V|-version)* ]] && version_mode=1
-    [[ ${compwords} == *-@(S|-searchdesc)* ]] && searchdesc_mode=1
-    [[ ${compwords} == *-@(h|-help)* ]] && help_mode=1
+    [[ ${compwords} == *" "-@(V|-version)* ]] && version_mode=1
+    [[ ${compwords} == *" "-@(S|-searchdesc)* ]] && searchdesc_mode=1
+    [[ ${compwords} == *" "-@(h|-help)* ]] && help_mode=1
 	    
     # Handle special cases.
     if [[ "${action}" == 'search' ]] || [[ -n "${searchdesc_mode}" ]] || \
@@ -245,7 +252,7 @@ _emerge()
 		--sync \
 		--tree \
 		--update --upgradeonly --usepkg --usepkgonly \
-		--verbose"
+		--verbose --depclean --info --search"
 	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
 		opts="${opts} --help --resume --searchdesc --version"
 	    fi
@@ -324,7 +331,6 @@ _emerge()
     else
         c="${cond}"
     fi
-
     
     # Handle cases where a conditional is specified.
     if [[ -n "${cond}" ]]; then
@@ -374,7 +380,12 @@ _emerge()
                                 for x in ${cat}/${pkg}/*.ebuild ; do \
                                     [[ -f "${x}" ]] || continue ; \
                                     x="${x/${pkg}\/}" ; \
-                                    echo "${c}${x%*.ebuild}" ; \
+                                    if [[ ${cond:0:1} == "'" ]] || \
+                                        [[ ${cond:0:1} == '"' ]] ; then 
+                                        echo "${c}${x%*.ebuild}" ; \
+                                    else
+                                        echo "${x%*.ebuild}" ; \
+                                    fi ; \
                                 done ; \
                             fi ; \
                         done))
@@ -529,7 +540,7 @@ _emerge()
 
     return 0
 }
-complete -F _emerge emerge
+complete -o filenames -F _emerge emerge
 }
 
 #
