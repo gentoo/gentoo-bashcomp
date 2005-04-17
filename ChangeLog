@@ -1,5 +1,6 @@
 2005-04-17 Aaron Walker <ka0ttic@gentoo.org>
 
+	* Tagged 20050417 Release.
 	* Fixed bug (#88797) that caused any package name matching "*-h*" to
 	be interpreted as -h|--help.
 	* Fixed bug (#88799) that caused -Ca (or any other option after -C) to
