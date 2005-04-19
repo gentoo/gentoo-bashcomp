@@ -98,14 +98,14 @@ _pkgname()
                     done))
 	        # When we've completed most of the name, also display the version for
 	        # possible completion.
-	        if [[ ${#COMPREPLY[@]} -le 1 || ${cur:${#cur}-1:1} == "-" ]] && [[ ${cur} != */ ]]; then
+	        if [[ ${#COMPREPLY[@]} -le 1 || ${cur:${#cur}-1:1} == "-" ]] && 
+                    [[ ${cur} != */ ]]; then
 		    # The portage cache is appropriate to complete specific versions from.
 		    COMPREPLY=(${COMPREPLY[@]} $(\
                         for pd in ${portdir} ; do \
                             if [[ -d ${pd}/metadata/cache ]] ; then \
                                 builtin cd ${pd}/metadata/cache; \
-                                compgen -W "$(compgen -G "${cur}*")" --
-                                "${cur}" ; \
+                                compgen -W "$(compgen -G "${cur}*")" -- "${cur}" ; \
                             fi ; \
                         done))
 	        fi
@@ -151,7 +151,7 @@ _pkgname()
 have emerge && {
 _emerge()
 {
-    local c cur prev curword numwords compwords opts cond prepend
+    local c cur prev curword numwords opts cond prepend
     local words stopre stophere i x
     local action actionpos actionre sysactions eactions pkgpos
     local version_mode searchdesc_mode help_mode resume_mode
@@ -161,7 +161,6 @@ _emerge()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     numwords=${#COMP_WORDS[*]}
     curword=${COMP_CWORD}
-    compwords="${COMP_WORDS[*]}"
     actionre='@(-?([A-Za-z]*)[CPcis]*|@(metadata|s@(y@(nc|stem)|earch)|regen|@(unmerg|prune)e|world|@(@(dep)@(clean)|@(in@(fo|ject)))))'
     stopre=' @(?(--)depclean|?(--)info|?(--)metadata|regen|sy@(nc|stem)|world|--@(resume|s@(kipfirst|ync)))'
     opts=''
@@ -172,7 +171,7 @@ _emerge()
     fi
 
     # find action
-    for x in ${compwords} ; do
+    for x in ${COMP_LINE} ; do
         if [[ ${x} == ${actionre} ]] ; then
             action=${x}
             break
@@ -208,9 +207,9 @@ _emerge()
     fi
 	    
     # Check for special cases.
-    [[ ${compwords} == *" "-@(V|-version)* ]] && version_mode=1
-    [[ ${compwords} == *" "-@(S|-searchdesc)* ]] && searchdesc_mode=1
-    [[ ${compwords} == *" "-@(h|-help)* ]] && help_mode=1
+    [[ ${COMP_LINE} == *" "-@(V|-version)* ]] && version_mode=1
+    [[ ${COMP_LINE} == *" "-@(S|-searchdesc)* ]] && searchdesc_mode=1
+    [[ ${COMP_LINE} == *" "-@(h|-help)* ]] && help_mode=1
 	    
     # Handle special cases.
     if [[ "${action}" == 'search' ]] || [[ -n "${searchdesc_mode}" ]] || \
@@ -227,13 +226,13 @@ _emerge()
     # Complete on options.
     if [[ "${cur}" == -* ]]; then
         # If a resume option was specified, it needs special handling.
-        [[ ${compwords} == *--@(resume|skipfirst)* ]] && resume_mode=1
+        [[ ${COMP_LINE} == *--@(resume|skipfirst)* ]] && resume_mode=1
 	
         if [[ -n "${resume_mode}" ]]; then
 	    if [[ "${cur}" == --* ]]; then
 		opts="--ask --pretend --resume --skipfirst"
 	    elif [[ "${cur}" == -* ]]; then
-                [[ ${compwords} == *--@(ask|pretend)* ]] && ask_premode=1
+                [[ ${COMP_LINE} == *--@(ask|pretend)* ]] && ask_premode=1
                 [[ -n "${ask_premode}" ]] && opts="-a -p"
 	    fi
 	elif [[ "${cur}" == --* ]]; then
@@ -289,7 +288,7 @@ _emerge()
     fi
 	
     # Stop completion if a special case is encountered.
-    if [[ ${compwords} == *${stopre}* ]] ; then
+    if [[ ${COMP_LINE} == *${stopre}* ]] ; then
         unset COMPREPLY
 	return 0
     fi
@@ -472,7 +471,7 @@ _emerge()
 	#            emerge -a sys-kernel/gentoo-dev-sources
 	#
 	
-        if [[ ! " ${compwords} " == *" "*[/]*" "* ]]; then
+        if [[ ! " ${COMP_LINE} " == *" "*[/]*" "* ]]; then
 	    sysactions=$'\n'"system"$'\n'"world"
 	else
 	    sysactions=''
@@ -1464,14 +1463,14 @@ _etcat()
         -b|belongs)
             COMPREPLY=($(compgen -f -- ${cur}))
             ;;
-        -c|changes)
+        -c|changes|-v|versions)
             _pkgname -A ${cur}
             ;;
         -d|depends)
             # kinda hard to complete on a regex...
             COMPREPLY=()
             ;;
-        -f|files|-s|size|-u|uses|-v|versions)
+        -f|files|-s|size|-u|uses)
             _pkgname -I ${cur}
             ;;
         *)
@@ -1488,6 +1487,46 @@ _etcat()
     esac
 }
 complete -o filenames -F _etcat etcat
+}
+
+have revdep-rebuild && {
+_revdep_rebuild() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-X --package-names --soname --soname-regexp -q --quiet"
+
+    if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] || \
+        [[ ${prev} == @(-q|--quiet) ]] ; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        return 0
+    fi
+
+    case "${prev}" in
+        -X|--package-names)
+            _pkgname -I ${cur}
+            ;;
+        --soname)
+            local sonames=$(for x in /lib/*.so?(.)* /usr/lib*/*.so?(.)* ; do \
+                                echo ${x##*/} ; \
+                            done)
+            COMPREPLY=($(compgen -W "${sonames}" -- ${cur}))
+            ;;
+        --soname-regexp)
+            COMPREPLY=()
+            ;;
+        *)
+            if [[ ${COMP_LINE} == *" "@(-X|--package-names)* ]] ; then
+                _pkgname -I ${cur}
+                COMPREPLY=(${COMPREPLY[@]} $(compgen -W "${opts}"))
+            else
+                COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+            fi
+            ;;
+    esac
+}
+complete -F _revdep_rebuild revdep-rebuild
 }
 
 # vim: set ft=sh tw=80 sw=4 et :

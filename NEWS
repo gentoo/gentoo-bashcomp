@@ -1,6 +1,14 @@
 This file contains a summary of changes in released versions. Please read the
 ChangeLog for a more detailed listing of changes/bug fixes.
 
+XXXXXXXX:
+    New features:
+     - revdep-rebuild completion
+
+    Bug fixes:
+     - Fixed bug in equery -v completion (previously only completed on installed
+       packages).
+
 20050417:
     New features:
      - etcat completion
