@@ -21,11 +21,11 @@ have()
 _portdir()
 {
     sed -n -e '/^PORTDIR=/ { s/^[^=]\+="\?\([^"]\+\|\S\+\).*/\1/p ; q }' \
-        /etc/make.{conf,globals}
+        /etc/make.{conf,globals} 2>/dev/null
 
     if [[ $1 == '-o' ]] ; then
         sed -n -e '/^PORTDIR_OVERLAY=/ { s/^[^=]\+="\?\([^"]\+\|\S\+\).*/\1/p ; q }' \
-            /etc/make.conf
+            /etc/make.conf 2>/dev/null
     fi
 }
 
@@ -1138,6 +1138,8 @@ _equery()
 		        ;;
 	            *)
 		        local glob loc
+                        [[ -f ${portdir}/profiles/use.desc ]] || return 0
+                        [[ -f ${portdir}/profiles/use.local.desc ]] || return 0
 		        glob=$(sed -n -e 's/^\([^ ]\+\) - .*$/\1/p' ${portdir}/profiles/use.desc)
 		        loc=$(sed -n -e 's/^[^ ]\+:\([^ ]*\) - .*$/\1/p' ${portdir}/profiles/use.local.desc)
 		        COMPREPLY=($(compgen -W "$glob $loc" -- $cur))
@@ -1162,6 +1164,8 @@ _ekeyword()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     portdir=$(_portdir)
+
+    [[ -f ${portdir}/profiles/arch.list ]] || return 0
 
     for arch in all $(< ${portdir}/profiles/arch.list) ; do
 	archl_m="${archl_m} -${arch}"

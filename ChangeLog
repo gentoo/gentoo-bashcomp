@@ -3,6 +3,8 @@ ChangeLog for gentoo-bashcomp
 2005-04-19 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Added splat completion.
+	* Fixed _portdir() to not spew messages if for some reason
+	make.{conf,globals} is unreadable.
 
 2005-04-18 Aaron Walker <ka0ttic@gentoo.org>
 
