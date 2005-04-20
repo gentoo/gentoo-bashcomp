@@ -1529,4 +1529,31 @@ _revdep_rebuild() {
 complete -F _revdep_rebuild revdep-rebuild
 }
 
+have splat && {
+_splat() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -v --verbose -s --summary -f --logfile -c --colored -l
+    --list -u --count -p --package -t --sort -r --reverse"
+
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        return 0
+    fi
+
+    case "${prev}" in
+        -f|--logfile)
+            COMPREPLY=($(compgen -f -- ${cur}))
+            ;;
+        *)
+            _pkgname -A ${cur}
+            COMPREPLY=($(compgen -W "${COMPREPLY[@]} ${opts}" -- ${cur}))
+            ;;
+    esac
+}
+complete -o filenames -F _splat splat
+}
+
 # vim: set ft=sh tw=80 sw=4 et :

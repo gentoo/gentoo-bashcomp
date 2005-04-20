@@ -1,5 +1,9 @@
 ChangeLog for gentoo-bashcomp
 
+2005-04-19 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Added splat completion.
+
 2005-04-18 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Added revdep-rebuild completion.
