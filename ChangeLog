@@ -1,5 +1,9 @@
 ChangeLog for gentoo-bashcomp
 
+2005-04-22 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Added euse completion.
+
 2005-04-19 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Added splat completion.

@@ -1560,4 +1560,58 @@ _splat() {
 complete -o filenames -F _splat splat
 }
 
+have euse && {
+_euse() {
+    local cur prev opts sopts use portdir
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -v --version -i --info -a --active -E --enable -D --disable
+        -P --prune"
+    sopts="-g --global -l --local"
+
+    if [[ ${cur} == -* ]] && [[ ${COMP_CWORD} -eq 1 ]] ; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        return 0
+    fi
+
+    case "${prev}" in
+        -h|--help|-v|--version)
+            COMPREPLY=()
+            ;;
+        -a|--active)
+            COMPREPLY=($(compgen -W "${sopts}" -- ${cur}))
+            ;;
+        -i|--info|-E|--enable|-D|--disable|-P|--prune)
+            portdir=$(_portdir)
+	    use="$(sed -n -e 's/^\([^ ]\+\) - .*$/\1/p' ${portdir}/profiles/use.desc) \
+	    $(sed -n -e 's/^[^ ]\+:\([^ ]*\) - .*$/\1/p' ${portdir}/profiles/use.local.desc)"
+	    COMPREPLY=($(compgen -W "${use} ${sopts}" -- ${cur}))
+            ;;
+        *)
+            local l=0 g=0
+
+            if [[ ${COMP_LINE} == *" "@(-l|--local)* ]] ; then
+                l=1
+            elif [[ ${COMP_LINE} == *" "@(-g|--global)* ]] ; then
+                g=1
+            fi
+
+            if [[ ${COMP_LINE} == *" "@(-i|--info|-E|--enable|-D|--disable|-P|--prune)* ]]
+            then
+                portdir=$(_portdir)
+
+                if [[ ${l} -eq 1 ]] ; then
+                    use=$(sed -n -e 's/^[^ ]\+:\([^ ]*\) - .*$/\1/p' ${portdir}/profiles/use.local.desc)
+                elif [[ ${g} -eq 1 ]] ; then
+                    use=$(sed -n -e 's/^\([^ ]\+\) - .*$/\1/p' ${portdir}/profiles/use.desc)
+                fi
+
+                COMPREPLY=($(compgen -W "${use}" -- ${cur}))
+            fi
+    esac
+}
+complete -F _euse euse
+}
+
 # vim: set ft=sh tw=80 sw=4 et :
