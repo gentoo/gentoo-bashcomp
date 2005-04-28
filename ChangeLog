@@ -1,5 +1,10 @@
 ChangeLog for gentoo-bashcomp
 
+2005-04-28 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Fixed portageq completion to use env -i when parsing emerge -v
+	--info output for envvar completion.
+
 2005-04-22 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Added euse completion.
