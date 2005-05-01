@@ -1614,4 +1614,32 @@ _euse() {
 complete -F _euse euse
 }
 
+have glsa-check && {
+_glsa_check() {
+    local cur prev opts
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-l --list -d --dump --print -t --test -p --pretend -f --fix -i
+    --inject -n --nocolor -h --help -V --version -v --verbose"
+
+    if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        return 0
+    fi
+
+    # too slow otherwise
+    if [[ ! -f ${ROOT}/tmp/gc.out ]] || \
+        [[ $(stat ${ROOT}/tmp/gc.out | \
+        sed -n -e 's/^Modify: \([[:digit:]]\+-[[:digit:]]\+-[[:digit:]]\+\).*$/\1/p') != "$(date +%F)" ]]
+    then
+        glsa-check -nl 2>/dev/null | \
+            sed -n -e  's/^\([[:digit:]]\+-[[:digit:]]\+\) .*$/\1/p' > \
+                ${ROOT}/tmp/gc.out
+    fi
+
+    COMPREPLY=($(compgen -W "${opts} $(< ${ROOT}/tmp/gc.out)" -- ${cur}))
+}
+complete -F _glsa_check glsa-check
+}
+
 # vim: set ft=sh tw=80 sw=4 et :
