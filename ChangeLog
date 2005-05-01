@@ -3,6 +3,7 @@ ChangeLog for gentoo-bashcomp
 2005-05-01 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Added glsa-check completion.
+	* Added epm completion.
 
 2005-04-28 Aaron Walker <ka0ttic@gentoo.org>
 

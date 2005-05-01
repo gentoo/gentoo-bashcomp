@@ -4,10 +4,16 @@ ChangeLog for a more detailed listing of changes/bug fixes.
 XXXXXXXX:
     New features:
      - revdep-rebuild completion
+     - epm completion
+     - euse completion
+     - splat completion
+     - glsa-check completion
 
     Bug fixes:
      - Fixed bug in equery -v completion (previously only completed on installed
        packages).
+     - portageq envvar completion now runs emerge --info -v with an empty
+       environment so that only the vars we care about are completed.
 
 20050417:
     New features:
