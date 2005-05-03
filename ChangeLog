@@ -1,5 +1,10 @@
 ChangeLog for gentoo-bashcomp
 
+2005-05-03 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Add --filter option for equery files and added --help to all
+	subcommand completions.  Gentoo bug 91060.
+
 2005-05-01 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Added glsa-check completion.

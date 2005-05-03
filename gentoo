@@ -994,18 +994,25 @@ _equery()
 	    echo -n "# Not implemented! "
 	    ;;
 	f?(iles))
+
+            if [[ ${prev} == --filter* || ${cur} == --filter=* ]] ; then
+                COMPREPLY=()
+                return 0
+            fi
+
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
 		case $cur in
 		    -*)
-			COMPREPLY=($(compgen -W "--timestamp --md5sum --type" -- $cur))
+			COMPREPLY=($(compgen -W "--help --timestamp --md5sum
+                        --type --filter=" -- $cur))
 			;;
 		    *)
 			# Only installed packages can have their files listed.
 		        _pkgname -I $cur
 			;;
-		    esac
+		esac
 	    fi
 	    ;;
 	l?(ist))
@@ -1014,7 +1021,7 @@ _equery()
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
 		case "${cur}" in
 		    -*)
-			COMPREPLY=($(compgen -W "-i --installed -I --exclude-installed -p --portage-tree -o --overlay-tree" -- $cur))
+			COMPREPLY=($(compgen -W "--help -i --installed -I --exclude-installed -p --portage-tree -o --overlay-tree" -- $cur))
 			;;
 		    *)
                         case "${prev}" in
@@ -1047,7 +1054,7 @@ _equery()
 	    then
 		case $cur in
 		    -*)
-			    COMPREPLY=($(compgen -W "-c --category -e --earlyout" -- $cur))
+			    COMPREPLY=($(compgen -W "--help -c --category -e --earlyout" -- $cur))
 			    ;;
 		    *)
                 COMPREPLY=($(compgen -f -- $cur) \
@@ -1065,6 +1072,7 @@ _equery()
 	    if [[ ${prev} == ${mode} ]]; then
 	        # Complete on all package names.
 	        _pkgname -A $cur
+                COMPREPLY=($(compgen -W "${COMPREPLY[@]} --help" -- ${cur}))
 	    fi
 	    ;;
 	g|depgraph)
@@ -1073,7 +1081,7 @@ _equery()
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
 	        case $cur in
 		    -*)
-		        COMPREPLY=($(compgen -W "-U --no-useflags -l --linear" -- $cur))
+		        COMPREPLY=($(compgen -W "--help -U --no-useflags -l --linear" -- $cur))
 			;;
 		    *)
 			# Complete on installed package names.
@@ -1088,7 +1096,7 @@ _equery()
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
 		case $cur in
 		    -*)
-		        COMPREPLY=($(compgen -W "-a --all-packages -d --direct -D --indirect" -- $cur))
+		        COMPREPLY=($(compgen -W "--help -a --all-packages -d --direct -D --indirect" -- $cur))
 			;;
 		    *)
 			case $prev in
@@ -1111,6 +1119,7 @@ _equery()
 	    if [[ ${prev} == ${mode} ]]; then
 		# Only installed packages can have their integrity verified.
 		_pkgname -I $cur
+                COMPREPLY=($(compgen -W "${COMPREPLY[@]} --help" -- ${cur}))
 	    fi
 	    ;;
 	s?(ize))
@@ -1119,7 +1128,7 @@ _equery()
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
 		case $cur in
 		    -*)
-			COMPREPLY=($(compgen -W "-b --bytes" -- $cur))
+			COMPREPLY=($(compgen -W "--help -b --bytes" -- $cur))
 			;;
 		    *)
 			# Only installed packages can have their size calculated.
@@ -1134,7 +1143,7 @@ _equery()
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
 	        case $cur in
 	            -*)
-		        COMPREPLY=($(compgen -W "-i --installed -I --exclude-installed -p --portage-tree -o --overlay" -- $cur))
+		        COMPREPLY=($(compgen -W "--help -i --installed -I --exclude-installed -p --portage-tree -o --overlay" -- $cur))
 		        ;;
 	            *)
 		        local glob loc
