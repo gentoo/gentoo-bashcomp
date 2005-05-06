@@ -1,8 +1,15 @@
 ChangeLog for gentoo-bashcomp
 
+2005-05-06 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Tagged 20050506 Release.
+	* Added _list_compgen function for completing --option=<list> kind of
+	options.  equery files --filter now works.  Many thanks to Thomas de
+	Grenier de Latour in Gentoo bug 91060.
+
 2005-05-03 Aaron Walker <ka0ttic@gentoo.org>
 
-	* Add --filter option for equery files and added --help to all
+	* Add --filter option for 'equery files' and added --help to all
 	subcommand completions.  Gentoo bug 91060.
 
 2005-05-01 Aaron Walker <ka0ttic@gentoo.org>

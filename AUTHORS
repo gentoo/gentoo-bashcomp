@@ -1,17 +1,33 @@
-Maintainer:
-Zach Forrest <zorder@users.sourceforge.net>
+Maintainers
+===========
 Aaron Walker <ka0ttic@gentoo.org>
+Zach Forrest <zorder@users.sourceforge.net>
 
-Authors:
+Authors
+=======
 Geert Bevin  <gbevin@theleaf.be> (original author)
 Zach Forrest <zorder@users.sourceforge.net>
 
-Contributors:
-Ed Catmur <ed@catmur.co.uk> - absolute path patch, init.d completion, _ebuild() fixes
-Peter Jensen <gentoo-bugs@pekaje.homeip.net> - equery completion
-Ciaran McCreesh <ciaranm@gentoo.org> - sed command for _portdir function, ekeyword completion
+Contributors
+============
+Ed Catmur <ed@catmur.co.uk>
+ - absolute path patch
+ - init.d completion
+ - _ebuild() fixes
 
-Note:
+Peter Jensen <gentoo-bugs@pekaje.homeip.net>
+ - original equery completion
+
+Ciaran McCreesh <ciaranm@gentoo.org>
+ - sed command for _portdir function
+ - ekeyword completion
+
+Thomas de Grenier de Latour <degrenier@easyconnect.fr>
+ - _list_compgen() author
+ - equery files --filter completion
+
+Note
+====
 Modifications were made in a version of this script found in
 'app-shells/bash-completion-20040526', but I don't know who to
 credit. Please let me know who you are if you read this. Thanks.

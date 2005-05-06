@@ -1,13 +1,14 @@
 This file contains a summary of changes in released versions. Please read the
 ChangeLog for a more detailed listing of changes/bug fixes.
 
-XXXXXXXX:
+20050506:
     New features:
      - revdep-rebuild completion
      - epm completion
      - euse completion
      - splat completion
      - glsa-check completion
+     - equery files --filter completion
 
     Bug fixes:
      - Fixed bug in equery -v completion (previously only completed on installed

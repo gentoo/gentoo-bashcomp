@@ -146,6 +146,146 @@ _pkgname()
 }
 
 #
+# This is an helper function for completion of  "-o <list>" / "--option=<list>"
+# kind of command lines options.
+# 
+# Usage: _list_compgen <current> <sep> <item1>[<sep><item2> ...]
+# - <current>: what we have so far on the command line
+# - <sep>: the separator character used in lists
+# - <itemN>: a valid item
+# Returns: the function outputs each possible completion (one per line),
+# and returns 0. Typical usage is COMPREPLY=($(_list_compgen ...)).
+#
+# Note: items must not contain the <sep> character (no backslash escaping has 
+# been implemented).
+#
+_list_compgen()
+{
+	# Read the three parameters. 
+	local current="${1}" ; shift
+	local sep="${1}" ; shift
+	local items="${*}"
+
+	# This is the maximum number of "<current><sep><other_item>" possible
+	# completions that should be listed in case <current> is a valid list.
+	# Setting it to a negative value means "no bound" (always list everything).
+	# Setting it to 0 means "never list anything" (only suggest <sep>).
+	# Setting it to a positive value N means "list up to N possible items, and
+	# only suggest <sep> if there are more".
+	# It is probably not worth a parameter, thus it will defaults to my 
+	# prefered setting (1) if not already defined in the environment.
+	local max_others_number=${max_others_number:-1}
+
+	# Save IFS. The <sep> character will be used instead in the following.
+	local saved_IFS="${IFS}"
+	IFS="${sep}"
+
+	# Split the current items list in two parts:
+	# - current_item is the last one (maybe partial or even empty)
+	# - prefix_item are items are the previous ones
+	local current_item="${current##*${sep}}"
+	local prefix_items="${current%${current_item}}"
+
+	# Iterate through valid items to recognize those that are:
+	# - partial matches of the <current_item>
+	# - already used in the list prefix
+	# - not used in the list prefix, and not an exact match of <current_item>
+	# Also check whether the <current_item> is exactly a valid one.
+	local matching_items
+	local other_items
+	local exact_match
+	local my_item
+	for my_item in ${items} ; do
+		if [[ "${sep}${prefix_items}${sep}" == *"${sep}${my_item}${sep}"* ]] ; then
+			# The item has already been used in the list prefix: ignore it.
+			continue
+		elif [[ "${my_item}" == "${current_item}" ]] ; then
+			# The item _exactly_ matches the <current_item>: that means that we
+			# will have to suggest some more items to add behind.
+			exact_match=1
+		elif [[ "${my_item}" == "${current_item}"* ]] ; then
+			# The item matches the <current_item>: it will be a possible
+			# completion. It will also be a possible additional item in case of
+			# exact match.
+			matching_items="${matching_items}${sep}${my_item}"
+			other_items="${other_items}${sep}${my_item}"
+		else
+			# The item neither matches the <current_item> nor has been already
+			# used: it will only be a possible additional item in case of exact
+			# match.
+			other_items="${other_items}${sep}${my_item}"
+		fi
+	done
+	matching_items="${matching_items#${sep}}"
+	other_items="${other_items#${sep}}"
+
+	# Takes care of the case where <current_item> is not exactly valid but
+	# there is only one matching item: force this completion, and handle it
+	# just as an exact match.
+	if [[ -z "${exact_match}" ]] \
+	&& [[ "${matching_items}" != *"${sep}"* ]] ; then
+		exact_match=1
+		current="${current%${current_item}}${matching_items}"
+		current_item="${matching_items}"
+		matching_items=""
+		other_items="${sep}${other_items}${sep}"
+		other_items="${other_items/${sep}${current_item}${sep}/${sep}}"
+		other_items="${other_items#${sep}}"
+		other_items="${other_items%${sep}}"
+	fi
+
+	# List all possible completions. They are stored in an array.
+	# XXX: maybe if should be COMPREPLY directly? (with no output at the end)
+	local my_compreply=()
+	local i=0
+	if [[ -n "${exact_match}" ]] ; then
+		# Found an exact match? Then add "<current>".
+		my_compreply[${i}]="${current}"
+		let i++
+	fi
+	if [[ -n "${matching_items}" ]] ; then
+		# Found some matching items?
+		# Then add "<prefix_items><matching_item>".
+		for my_item in ${matching_items} ; do
+			my_compreply[${i}]="${prefix_items}${my_item}"
+			let i++
+		done
+	fi
+	if [[ -n "${exact_match}" ]] \
+	&& [[ -n "${other_items}" ]] ; then
+		# Found an exact match and some other possible items remain?
+		# First, count them:
+		local count_others=0
+		for my_item in ${other_items} ; do
+			let count_others++
+		done
+		# Then decide how to behave depending on the max_others_number setting:
+		if (( max_others_number < 0 )) \
+		|| (( count_others <= max_others_number )) ; then
+			# List the possible "<current><sep><other_item>" completions.
+			for my_item in ${other_items} ; do
+				my_compreply[${i}]="${current}${sep}${my_item}"
+				let i++
+			done
+		else # Only suggest adding the <sep> character.
+			my_compreply[${i}]="${current}${sep}"
+			let i++
+		fi
+	fi
+
+	# Restore IFS.
+	IFS="${saved_IFS}"
+
+	# Output the array of possible completions and returns.
+	local j=0
+	while (( i > j )) ; do
+		echo ${my_compreply[$j]}
+		let j++
+	done
+	return 0
+}
+
+#
 # emerge completion command
 #
 have emerge && {
@@ -994,16 +1134,21 @@ _equery()
 	    echo -n "# Not implemented! "
 	    ;;
 	f?(iles))
-
-            if [[ ${prev} == --filter* || ${cur} == --filter=* ]] ; then
-                COMPREPLY=()
-                return 0
-            fi
-
 	    # Only complete if the previous entry on the command line is not
 	    # a package name.
 	    if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+	    	# --filter=<list>: completion of the files types list
+	    	if [[ ${prev} == "-f" || "${cur}" == "--filter="* ]] ; then
+	    		COMPREPLY=($(_list_compgen "${cur#--filter=}" , \
+	    		    dir,obj,sym,dev,fifo,path,conf,cmd,doc,man,info))
+	    		return 0
+	    	fi
 		case $cur in
+		    --f*) 
+		    # don't handle --filter= with others to avoid space after the "="
+			COMPREPLY=($(compgen -P "--filter=" \
+				-W "dir obj sym dev fifo path conf cmd doc man info"))
+			;;
 		    -*)
 			COMPREPLY=($(compgen -W "--help --timestamp --md5sum
                         --type --filter=" -- $cur))
