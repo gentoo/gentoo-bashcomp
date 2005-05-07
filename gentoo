@@ -622,7 +622,16 @@ _emerge()
         eactions=$'\n'"clean"$'\n'"depclean"$'\n'"inject"$'\n'"prune"$'\n'"regen"$'\n'"search"$'\n'"unmerge"
     fi
     if [[ -n "${cur}" ]] ; then
-	if [[ "${cur}" == */* ]] ; then
+        if [[ ${cur} == virtual/* ]] ; then
+            words=$(\
+                for pd in ${portdir} ; do \
+                    if [[ -d ${pd}/profiles ]] ; then
+                        find ${pd}/profiles -name virtuals -exec \
+                            sed -n -e 's|^\(virtual/[[:alnum:]]\+\).*$|\1|p' {} \; | \
+                            sort -u
+                    fi ; \
+                done)
+	elif [[ ${cur} == */* ]] ; then
 	    words=$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd}; \
@@ -634,11 +643,20 @@ _emerge()
                     builtin cd ${pd} ; \
                     compgen -S '/' -G "${cur}*"; \
                 done)"${sysactions}""${eactions}"
+            # complete on virtuals
+            ww="${ww} $(\
+                for pd in ${portdir} ; do \
+                    if [[ -d ${pd}/profiles ]] ; then
+                        find ${pd}/profiles -name virtuals -exec \
+                            sed -n -e 's|^\(virtual/[[:alnum:]]\+\).*$|\1|p' {} \; | \
+                            sort -u
+                    fi ; \
+                done)"
 
             local w
             for x in ${ww} ; do w="${x}\n${w}" ; done
 
-            words=$(echo -e ${w} | uniq)
+            words=$(echo -e ${w} | sort -u)
 
             local n=0
             for i in ${words} ; do

@@ -1,5 +1,9 @@
 ChangeLog for gentoo-bashcomp
 
+2005-05-07 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Added support to _emerge for completing on virtual/*.
+
 2005-05-06 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Tagged 20050506 Release.

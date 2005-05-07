@@ -1,6 +1,10 @@
 This file contains a summary of changes in released versions. Please read the
 ChangeLog for a more detailed listing of changes/bug fixes.
 
+XXXXXXXX:
+    New features:
+     - emerge completion now supports completing on virtual/*
+
 20050506:
     New features:
      - revdep-rebuild completion
