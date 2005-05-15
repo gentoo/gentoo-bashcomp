@@ -580,7 +580,7 @@ _emerge()
                         if [[ -d ${pd}/metadata/cache ]] ; then \
                             builtin cd ${pd}/metadata/cache; \
                             for i in */${cur}*; do \
-                                echo ${i##*/}; \
+                                [[ -f $i ]] && echo ${i##*/}; \
                             done ; \
                         fi ; \
                     done)"

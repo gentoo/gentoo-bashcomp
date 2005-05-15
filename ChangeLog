@@ -1,5 +1,10 @@
 ChangeLog for gentoo-bashcomp
 
+2005-05-15 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Tagged 20050515 release.
+	* Add missing test in glob loop. Gentoo bug 92479.
+
 2005-05-07 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Added support to _emerge for completing on virtual/*.
