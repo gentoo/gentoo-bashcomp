@@ -1,9 +1,13 @@
 This file contains a summary of changes in released versions. Please read the
 ChangeLog for a more detailed listing of changes/bug fixes.
 
-XXXXXXXX:
+20050515:
     New features:
      - emerge completion now supports completing on virtual/*
+
+    Bug fixes:
+     - Fix bug in emerge completion that causes '\*' to be appended when a
+       package that doesnt exist tries to be completed.
 
 20050506:
     New features:
