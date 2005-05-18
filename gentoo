@@ -1684,8 +1684,10 @@ _revdep_rebuild() {
             _pkgname -I ${cur}
             ;;
         --soname)
-            local sonames=$(for x in /lib/*.so?(.)* /usr/lib*/*.so?(.)* ; do \
-                                echo ${x##*/} ; \
+            local sonames=$(for x in /usr/lib* ; do \
+                                for lib in $(find ${x} -name '*.so*' -type f) ; do \
+                                    [[ ${lib} == *@(perl|python)* ]] || echo ${lib##*/} ; \
+                                done ; \
                             done)
             COMPREPLY=($(compgen -W "${sonames}" -- ${cur}))
             ;;

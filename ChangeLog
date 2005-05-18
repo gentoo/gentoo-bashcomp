@@ -1,5 +1,9 @@
 ChangeLog for gentoo-bashcomp
 
+2005-05-18 Aaron Walker <ka0ttic@gentoo.org>
+
+	* More reliable revdep-rebuild --soname completion.
+
 2005-05-15 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Tagged 20050515 release.
