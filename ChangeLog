@@ -1,5 +1,12 @@
 ChangeLog for gentoo-bashcomp
 
+2005-06-14 Aaron Walker <ka0ttic@gentoo.org>
+
+	* Added _complete_dev and _complete_herd functions for completing on
+	herd/developer names (only enabled if herdstat is available).
+	* Added metagen (app-portage/metagen) completion, which uses
+	_complete_herd/_complete_dev to generate possible completions.
+
 2005-05-18 Aaron Walker <ka0ttic@gentoo.org>
 
 	* More reliable revdep-rebuild --soname completion.

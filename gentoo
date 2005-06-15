@@ -286,6 +286,46 @@ _list_compgen()
 }
 
 #
+# completes developer/herd names (requires herdstat)
+#
+have herdstat && {
+_complete_herd() {
+    local herds_cache=/var/lib/herdstat/herds
+    # exists and generated today?
+    if [[ -f ${herds_cache} ]] &&
+        [[ $(stat ${herds_cache} | sed -n -e 's/^Modify: \([[:digit:]]\+-[[:digit:]]\+-[[:digit:]]\+\).*$/\1/p') == "$(date +%F)" ]]
+    then
+        cat ${herds_cache}
+    else
+        local herds=$(herdstat -q all 2>/dev/null)
+        echo ${herds} > ${herds_cache}
+        echo ${herds}
+    fi
+}
+
+_complete_dev() {
+    local devs devs_cache=/var/lib/herdstat/devs
+
+    # exists and generated today?
+    if [[ -f ${devs_cache} ]] &&
+        [[ $(stat ${devs_cache} | sed -n -e 's/^Modify: \([[:digit:]]\+-[[:digit:]]\+-[[:digit:]]\+\).*$/\1/p') == "$(date +%F)" ]]
+    then
+        devs=$(< ${devs_cache})
+    else
+        devs=$(herdstat -dq all 2>/dev/null)
+        echo ${devs} > ${devs_cache}
+    fi
+
+    if [[ ${1} == '-v' ]] ; then
+        local x
+        for x in ${devs} ; do echo ${x}@gentoo.org ; done
+    else
+        echo ${devs}
+    fi
+}
+}
+
+#
 # emerge completion command
 #
 have emerge && {
@@ -1856,6 +1896,41 @@ _epm() {
     esac
 }
 complete -o filenames -F _epm epm
+}
+
+#
+# metagen completion (requires herdstat)
+#
+
+have metagen && have herdstat && {
+_metagen() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -H -e -n -m -d -l -o -f -v -q -Q"
+
+    if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        return 0
+    fi
+
+    case "${prev}" in
+        -H)
+            COMPREPLY=($(compgen -W "$(_complete_herd) no-herd" -- ${cur}))
+            ;;
+        -e)
+            COMPREPLY=($(compgen -W "$(_complete_dev -v)" -- ${cur}))
+            ;;
+        -n|-d|-l|-o)
+            COMPREPLY=()
+            ;;
+        *)
+            COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+            ;;
+    esac
+}
+complete -F _metagen metagen
 }
 
 # vim: set ft=sh tw=80 sw=4 et :
