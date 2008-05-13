@@ -1,5 +1,10 @@
 ChangeLog for gentoo-bashcomp
 
+2008-05-13 Tristan Heaven <nyhm@gentoo.org>
+
+	* Removed herdstat functions as they're included with herdstat now.
+	* Use source instead of sed to get PORTDIR/PORTDIR_OVERLAY #182809.
+
 2005-06-14 Aaron Walker <ka0ttic@gentoo.org>
 
 	* Added _complete_dev and _complete_herd functions for completing on
