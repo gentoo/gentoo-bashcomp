@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# Copyright 1999-2005 Gentoo Foundation
+# Copyright 1999-2008 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License, v2 or later
 
 # also defined in bash_completion proper however, will produce command
@@ -1742,8 +1742,8 @@ _euse() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="-h --help -v --version -i --info -a --active -E --enable -D --disable
-        -P --prune"
+    opts="-h --help -v --version -i --info -I --info-installed -a --active
+        -E --enable -D --disable -P --prune"
     sopts="-g --global -l --local"
 
     if [[ ${cur} == -* ]] && [[ ${COMP_CWORD} -eq 1 ]] ; then
@@ -1758,7 +1758,7 @@ _euse() {
         -a|--active)
             COMPREPLY=($(compgen -W "${sopts}" -- ${cur}))
             ;;
-        -i|--info|-E|--enable|-D|--disable|-P|--prune)
+        -i|--info|-I|--info-installed|-E|--enable|-D|--disable|-P|--prune)
             portdir=$(_portdir)
 	    use="$(sed -n -e 's/^\([^ ]\+\) - .*$/\1/p' ${portdir}/profiles/use.desc) \
 	    $(sed -n -e 's/^[^ ]\+:\([^ ]*\) - .*$/\1/p' ${portdir}/profiles/use.local.desc)"
@@ -1773,7 +1773,7 @@ _euse() {
                 g=1
             fi
 
-            if [[ ${COMP_LINE} == *" "@(-i|--info|-E|--enable|-D|--disable|-P|--prune)* ]]
+            if [[ ${COMP_LINE} == *" "@(-i|--info|-I|--info-installed|-E|--enable|-D|--disable|-P|--prune)* ]]
             then
                 portdir=$(_portdir)
 
@@ -1796,7 +1796,8 @@ _glsa_check() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     opts="-l --list -d --dump --print -t --test -p --pretend -f --fix -i
-    --inject -n --nocolor -h --help -V --version -v --verbose"
+    --inject -n --nocolor -e --emergelike -h --help -V --version -v --verbose
+    -c --cve -m --mail"
 
     if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
         COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
