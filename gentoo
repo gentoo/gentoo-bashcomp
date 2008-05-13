@@ -295,7 +295,7 @@ _emerge()
 {
     local c cur prev curword numwords opts cond prepend
     local words stopre stophere i x
-    local action actionpos actionre sysactions eactions pkgpos
+    local action actionpos sysactions pkgpos
     local version_mode searchdesc_mode help_mode resume_mode
     local portdir=$(_portdir -o)
     COMPREPLY=()
@@ -303,8 +303,7 @@ _emerge()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     numwords=${#COMP_WORDS[*]}
     curword=${COMP_CWORD}
-    actionre='@(-?([A-Za-z]*)[CPcis]*|@(metadata|s@(y@(nc|stem)|earch)|regen|@(unmerg|prune)e|world|@(@(dep)@(clean)|@(in@(fo|ject)))))'
-    stopre=' @(?(--)depclean|?(--)info|?(--)metadata|regen|sy@(nc|stem)|world|--@(resume|s@(kipfirst|ync)))'
+    stopre='--@(depclean|metadata|regen|sync)'
     opts=''
 
     if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
@@ -314,7 +313,7 @@ _emerge()
 
     # find action
     for x in ${COMP_LINE} ; do
-        if [[ ${x} == ${actionre} ]] ; then
+        if [[ ${x} == -* ]] ; then
             action=${x}
             break
         fi
@@ -331,11 +330,10 @@ _emerge()
         
         if [[ ${action} == -* && ${action} != --* ]] ; then
 	    case "${action}" in
-		-*C*) action='unmerge' ;;
-		-*P*) action='prune' ;;
-		-*c*) action='clean' ;;
-		-*i*) action='inject' ;;
-		-*s*) action='search' ;;
+		-*C*) action='--unmerge' ;;
+		-*P*) action='--prune' ;;
+		-*c*) action='--clean' ;;
+		-*s*) action='--search' ;;
 	    esac
 	fi
     else
@@ -354,8 +352,8 @@ _emerge()
     [[ ${COMP_LINE} == *" "-@(h|-help)* ]] && help_mode=1
 	    
     # Handle special cases.
-    if [[ "${action}" == 'search' ]] || [[ -n "${searchdesc_mode}" ]] || \
-        [[ -n "${version_mode}" ]] || [[ "${action}" == 'metadata' ]]
+    if [[ "${action}" == '--search' ]] || [[ -n "${searchdesc_mode}" ]] || \
+        [[ -n "${version_mode}" ]]
     then
         unset COMPREPLY
 	return 0
@@ -379,32 +377,37 @@ _emerge()
 	    fi
 	elif [[ "${cur}" == --* ]]; then
 	    # Complete on long options.
-	    opts="--ask --autoclean \
+	    opts="--alphabetical --ask \
 		--buildpkg --buildpkgonly \
-		--changelog --clean --columns \
-		--debug --deep \
+		--changelog --clean --color --columns --complete-graph --config \
+		--debug --deep --depclean \
 		--emptytree \
 		--fetch-all-uri --fetchonly \
 		--getbinpkg --getbinpkgonly \
-		--newuse --noconfmem --nodeps --noreplace --nospinner
+		--info \
+		--metadata \
+		--newuse --noconfmem --nodeps --noreplace --nospinner \
 		--oneshot --onlydeps \
-		--pretend \
+		--pretend --prune \
 		--quiet \
+		--reinstall --regen \
+		--search \
 		--sync \
 		--tree \
-		--update --upgradeonly --usepkg --usepkgonly \
-		--verbose --depclean --info --search"
+		--unmerge --update --upgradeonly --usepkg --usepkgonly \
+		--verbose \
+		--with-bdeps"
 	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
 		opts="${opts} --help --resume --searchdesc --version"
 	    fi
 	elif [[ "${cur}" == -* ]]; then
 	    # Complete on short options.
-	    opts="-B -D -G -K -O -U -a -b -d -e -f -g -k -l -n -o -p -q -t -u -v"
+	    opts="-B -D -G -K -N -O -a -b -d -e -f -g -k -l -n -o -p -q -t -u -v"
 	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
 		opts="${opts} -h -S -V"
 	    fi
 	    if [[ -z "${action}" ]] && [[ ${curword} -eq $((pkgpos - 1)) ]] ; then
-		opts="${opts} -C -P -c -i -s"
+		opts="${opts} -C -P -c -s"
 	    fi
 	fi
 		    
@@ -436,7 +439,7 @@ _emerge()
     fi
 
     # Complete on installed packages when unmerging.
-    if [[ "${action}" == 'unmerge' ]]; then
+    if [[ "${action}" == '--unmerge' ]]; then
 	if [[ -n "${cur}" ]] ; then
 	    if [[ "${cur}" == */* ]]; then
 		words=$(builtin cd /var/db/pkg; compgen -G "${cur}*")
@@ -594,11 +597,7 @@ _emerge()
 	
     # Complete on packages.
     if [[ ${COMP_CWORD} -eq 1 ]] ; then
-	if [[ $numwords -le 2 ]]; then
-	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"$'\n'"metadata"
-	else
-	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"
-	fi
+	    sysactions=$'\n'"system"$'\n'"world"
     else
 	# Only allow these actions if no packages have been specified.
 	#
@@ -620,9 +619,6 @@ _emerge()
 	fi
     fi
 	
-    if [[ -z "${action}" ]] && [[ ${curword} -le ${pkgpos} ]] ; then
-        eactions=$'\n'"clean"$'\n'"depclean"$'\n'"inject"$'\n'"prune"$'\n'"regen"$'\n'"search"$'\n'"unmerge"
-    fi
     if [[ -n "${cur}" ]] ; then
         if [[ ${cur} == virtual/* ]] ; then
             words=$(\
@@ -638,13 +634,13 @@ _emerge()
                 for pd in ${portdir} ; do \
                     builtin cd ${pd}; \
                     compgen -X "*metadata.xml" -G "${cur}*" ; \
-                done)"${sysactions}""${eactions}"
+                done)"${sysactions}"
 	else
             local ww=$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd} ; \
                     compgen -S '/' -G "${cur}*"; \
-                done)"${sysactions}""${eactions}"
+                done)"${sysactions}"
             # complete on virtuals
             ww="${ww} $(\
                 for pd in ${portdir} ; do \
@@ -669,7 +665,7 @@ _emerge()
                 words=$(for pd in ${portdir} ; do \
                             builtin cd ${pd} ; \
                             compgen -G "*-*/*" ; \
-                        done)"${sysactions}""${eactions}"
+                        done)"${sysactions}"
             fi
         fi
         COMPREPLY=($(for i in ${words} ; do \
@@ -680,7 +676,7 @@ _emerge()
             for pd in ${portdir} ; do \
                 builtin cd ${pd} ; \
                 compgen -S '/' -G "*-*" ; \
-            done)""${sysactions}""${eactions}"
+            done)""${sysactions}"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
 
