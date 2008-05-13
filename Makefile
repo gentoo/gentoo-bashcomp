@@ -19,7 +19,7 @@ install:
 
 dist:
 	mkdir -p "$(distpkg)"
-	cp Makefile gentoo ChangeLog AUTHORS TODO COPYING "$(distpkg)/"
+	cp AUTHORS ChangeLog COPYING gentoo Makefile NEWS TODO "$(distpkg)/"
 	tar cjf "$(distpkg).tar.bz2" "$(distpkg)"
 	rm -fr "$(distpkg)/"
 	@echo "success."
