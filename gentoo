@@ -1067,25 +1067,6 @@ complete $nospace -F _javaconfig java-config
 }
 
 #
-# opengl-update completion command
-#
-have opengl-update && {
-_openglupdate()
-{
-    local cur
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    if [[ ${#COMP_WORDS[*]} -le 2 ]]; then
-	COMPREPLY=($(compgen -W "$(for i in /usr/lib/opengl/*; do [ -d $i ] && echo ${i##*/}; done)" $cur))
-    else
-        unset COMPREPLY
-    fi
-    return 0
-}
-complete -F _openglupdate opengl-update
-}
-
-#
 # browser-config completion command
 #
 have browser-config && {
@@ -1616,55 +1597,6 @@ _webapp_config()
     esac
 }
 complete -F _webapp_config webapp-config
-}
-
-#
-# etcat completion
-#
-
-have etcat && {
-_etcat()
-{
-    local cur prev opts
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="-b belongs -c changes -d depends -f files -s size -u uses -v
-    versions"
-
-    if [[ ${COMP_CWORD} -eq 1 ]] ; then
-        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
-        return 0
-    fi
-
-    case "${prev}" in
-        -b|belongs)
-            COMPREPLY=($(compgen -f -- ${cur}))
-            ;;
-        -c|changes|-v|versions)
-            _pkgname -A ${cur}
-            ;;
-        -d|depends)
-            # kinda hard to complete on a regex...
-            COMPREPLY=()
-            ;;
-        -f|files|-s|size|-u|uses)
-            _pkgname -I ${cur}
-            ;;
-        *)
-            local x b=0
-            for x in ${COMP_WORDS[@]} ; do
-                [[ ${x} == "-b" || ${x} == "belongs" ]] && b=1
-            done
-
-            if [[ ${b} -eq 1 ]] ; then
-                local portdir=$(_portdir)
-                COMPREPLY=($(compgen -W "$(< ${portdir}/profiles/categories)" -- ${cur}))
-            fi
-            ;;
-    esac
-}
-complete -o filenames -F _etcat etcat
 }
 
 have revdep-rebuild && {
