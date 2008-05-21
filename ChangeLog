@@ -1,5 +1,8 @@
 ChangeLog for gentoo-bashcomp
 
+2008-05-21 Tristan Heaven <nyhm@gentoo.org>
+	* Update completion for emerge.
+
 2008-05-13 Tristan Heaven <nyhm@gentoo.org>
 
 	* Removed herdstat functions as they're included with herdstat now.

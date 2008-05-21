@@ -293,150 +293,147 @@ _list_compgen()
 have emerge && {
 _emerge()
 {
-    local c cur prev curword numwords opts cond prepend
-    local words stopre stophere i x
-    local action actionpos actionre sysactions eactions pkgpos
-    local version_mode searchdesc_mode help_mode resume_mode
-    local portdir=$(_portdir -o)
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    numwords=${#COMP_WORDS[*]}
-    curword=${COMP_CWORD}
-    actionre='@(-?([A-Za-z]*)[CPcis]*|@(metadata|s@(y@(nc|stem)|earch)|regen|@(unmerg|prune)e|world|@(@(dep)@(clean)|@(in@(fo|ject)))))'
-    stopre=' @(?(--)depclean|?(--)info|?(--)metadata|regen|sy@(nc|stem)|world|--@(resume|s@(kipfirst|ync)))'
-    opts=''
+	local c cur prev curword numwords opts cond prepend
+	local words stophere i x
+	local action actionpos sysactions pkgpos
+	local portdir=$(_portdir -o)
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+	numwords=${#COMP_WORDS[*]}
+	curword=${COMP_CWORD}
+	opts=''
 
-    if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
-        COMPREPLY=($(compgen -f -- ${cur}))
-        return 0
-    fi
-
-    # find action
-    for x in ${COMP_LINE} ; do
-        if [[ ${x} == ${actionre} ]] ; then
-            action=${x}
-            break
-        fi
-    done
-
-    if [[ -n "${action}" ]]; then
-	for ((i = 0; i < ${numwords}; i++ )); do
-	    if [[ ${COMP_WORDS[${i}]} == "${action}" ]]; then
-		actionpos=${i}
-		pkgpos=$((actionpos + 1))
-		break
-	    fi
-	done
-        
-        if [[ ${action} == -* && ${action} != --* ]] ; then
-	    case "${action}" in
-		-*C*) action='unmerge' ;;
-		-*P*) action='prune' ;;
-		-*c*) action='clean' ;;
-		-*i*) action='inject' ;;
-		-*s*) action='search' ;;
-	    esac
+	if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
+		COMPREPLY=($(compgen -f -- ${cur}))
+		return 0
 	fi
-    else
-	for ((i = 1; i < ${numwords}; i++ )); do
-	    if [[ ! "${COMP_WORDS[$i]}" == -* ]]; then
-		pkgpos=${i}
-		break
-	    fi
-	done
-	[[ -n "${pkgpos}" ]] || pkgpos=${numwords}
-    fi
-	    
-    # Check for special cases.
-    [[ ${COMP_LINE} == *" "-@(V|-version)* ]] && version_mode=1
-    [[ ${COMP_LINE} == *" "-@(S|-searchdesc)* ]] && searchdesc_mode=1
-    [[ ${COMP_LINE} == *" "-@(h|-help)* ]] && help_mode=1
-	    
-    # Handle special cases.
-    if [[ "${action}" == 'search' ]] || [[ -n "${searchdesc_mode}" ]] || \
-        [[ -n "${version_mode}" ]] || [[ "${action}" == 'metadata' ]]
-    then
-        unset COMPREPLY
-	return 0
-    elif [[ -n "${help_mode}" ]]; then
-	unset COMPREPLY
-	[[ ${curword} -eq 2 ]] && COMPREPLY=($(compgen -W 'config sync system' -- ${cur}))
-	return 0
-    fi
-	    
-    # Complete on options.
-    if [[ "${cur}" == -* ]]; then
-        # If a resume option was specified, it needs special handling.
-        [[ ${COMP_LINE} == *--@(resume|skipfirst)* ]] && resume_mode=1
-	
-        if [[ -n "${resume_mode}" ]]; then
-	    if [[ "${cur}" == --* ]]; then
-		opts="--ask --pretend --resume --skipfirst"
-	    elif [[ "${cur}" == -* ]]; then
-                [[ ${COMP_LINE} == *--@(ask|pretend)* ]] && ask_premode=1
-                [[ -n "${ask_premode}" ]] && opts="-a -p"
-	    fi
-	elif [[ "${cur}" == --* ]]; then
-	    # Complete on long options.
-	    opts="--ask --autoclean \
-		--buildpkg --buildpkgonly \
-		--changelog --clean --columns \
-		--debug --deep \
-		--emptytree \
-		--fetch-all-uri --fetchonly \
-		--getbinpkg --getbinpkgonly \
-		--newuse --noconfmem --nodeps --noreplace --nospinner
-		--oneshot --onlydeps \
-		--pretend \
-		--quiet \
-		--sync \
-		--tree \
-		--update --upgradeonly --usepkg --usepkgonly \
-		--verbose --depclean --info --search"
-	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
-		opts="${opts} --help --resume --searchdesc --version"
-	    fi
-	elif [[ "${cur}" == -* ]]; then
-	    # Complete on short options.
-	    opts="-B -D -G -K -O -U -a -b -d -e -f -g -k -l -n -o -p -q -t -u -v"
-	    if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
-		opts="${opts} -h -S -V"
-	    fi
-	    if [[ -z "${action}" ]] && [[ ${curword} -eq $((pkgpos - 1)) ]] ; then
-		opts="${opts} -C -P -c -i -s"
-	    fi
-	fi
-		    
-        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
-	
-        # NOTE: This slows things down!
-        # (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
-	# This removes any options from the list of completions that have
-	# already been specified on the command line.
-	COMPREPLY=($(echo "${COMP_WORDS[@]}" | \
-            (while read -d ' ' i; do
-		[[ "${i}" == "" ]] && continue
-		# flatten array with spaces on either side,
-		# otherwise we cannot grep on word boundaries of
-		# first and last word
-		COMPREPLY=" ${COMPREPLY[@]} "
-		# remove word from list of completions
-		COMPREPLY=(${COMPREPLY/ ${i%% *} / })
-	    done
-	    echo ${COMPREPLY[@]})))
 
-	return 0
-    fi
-	
-    # Stop completion if a special case is encountered.
-    if [[ ${COMP_LINE} == *${stopre}* ]] ; then
-        unset COMPREPLY
-	return 0
-    fi
+	# find action
+	for x in ${COMP_LINE} ; do
+		if [[ ${x} =~ ^(system|world)$ ]] || [[ ${x} =~ -[CPcs] ]] || \
+			[[ ${x} =~ --(clean|config|depclean|info|metadata|prune|regen|resume|search|sync|unmerge) ]]
+		then
+			action=${x}
+			break
+		fi
+	done
+
+	if [[ -n ${action} ]]; then
+		for ((i = 0; i < ${numwords}; i++ )); do
+			if [[ ${COMP_WORDS[${i}]} == "${action}" ]]; then
+				actionpos=${i}
+				pkgpos=$((actionpos + 1))
+				break
+			fi
+		done
+
+		if [[ ${action} == -* && ${action} != --* ]] ; then
+			case "${action}" in
+			-*C*) action='--unmerge' ;;
+			-*P*) action='--prune' ;;
+			-*c*) action='--clean' ;;
+			-*s*) action='--search' ;;
+			esac
+		fi
+	else
+		for ((i = 1; i < ${numwords}; i++ )); do
+			if [[ ! ${COMP_WORDS[$i]} == -* ]]; then
+				pkgpos=${i}
+				break
+			fi
+		done
+		[[ -z ${pkgpos} ]] && pkgpos=${numwords}
+	fi
+
+	# Handle special cases.
+	if [[ ${action} == "--search" ]] || [[ ${COMP_LINE} == *" "-@(S|-searchdesc)* ]] || \
+		[[ ${COMP_LINE} == *" "-@(V|-version)* ]] || [[ ${action} == "--metadata" ]]
+	then
+		unset COMPREPLY
+		return 0
+	elif [[ ${COMP_LINE} == *" "-@(h|-help)* ]] ; then
+		unset COMPREPLY
+		[[ ${curword} -eq 2 ]] && COMPREPLY=($(compgen -W 'system world --sync' -- ${cur}))
+		return 0
+	fi
+
+	# Complete on options.
+	if [[ ${cur} == -* ]]; then
+		# If a resume option was specified, it needs special handling.
+		if [[ ${COMP_LINE} =~ --(resume|skipfirst) ]] ; then
+			if [[ ${cur} == --* ]]; then
+				opts="--ask --pretend --resume --skipfirst"
+			elif [[ ${cur} == -* ]]; then
+				[[ ${COMP_LINE} =~ --(ask|pretend) ]] && opts="-a -p"
+			fi
+		elif [[ ${cur} == --* ]]; then
+			# Complete on long options.
+			opts="--alphabetical --ask \
+				--buildpkg --buildpkgonly \
+				--changelog --clean --color=y --color=n --columns --complete-graph --config \
+				--debug --deep --depclean \
+				--emptytree \
+				--fetch-all-uri --fetchonly \
+				--getbinpkg --getbinpkgonly \
+				--ignore-default-opts --info \
+				--metadata \
+				--newuse --noconfmem --nodeps --noreplace --nospinner \
+				--oneshot --onlydeps \
+				--pretend --prune \
+				--quiet \
+				--reinstall=changed-use --regen \
+				--search \
+				--sync \
+				--tree \
+				--unmerge --update --upgradeonly --usepkg --usepkgonly \
+				--verbose \
+				--with-bdeps=y --with-bdep=n"
+			if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
+				opts="${opts} --help --resume --searchdesc --version"
+			fi
+		elif [[ ${cur} == -* ]]; then
+			# Complete on short options.
+			opts="-B -D -G -K -N -O -a -b -d -e -f -g -k -l -n -o -p -q -t -u -v"
+			if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
+				opts="${opts} -h -S -V"
+			fi
+			if [[ -z ${action} ]] && [[ ${curword} -eq $((pkgpos - 1)) ]] ; then
+				opts="${opts} -C -P -c -s"
+			fi
+		fi
+
+		COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+
+		# NOTE: This slows things down!
+		# (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
+		# This removes any options from the list of completions that have
+		# already been specified on the command line.
+		COMPREPLY=($(echo "${COMP_WORDS[@]}" | \
+			(while read -d ' ' i; do
+				[[ ${i} == "" ]] && continue
+				# flatten array with spaces on either side,
+				# otherwise we cannot grep on word boundaries of
+				# first and last word
+				COMPREPLY=" ${COMPREPLY[@]} "
+				# remove word from list of completions
+				COMPREPLY=(${COMPREPLY/ ${i%% *} / })
+			done
+			echo ${COMPREPLY[@]})))
+
+		return 0
+	fi # options
+
+	# Stop completion if a special case is encountered.
+	if [[ ${action} =~ (system|world) ]] || \
+		[[ ${COMP_LINE} =~ --(depclean|metadata|regen|resume|skipfirst|sync) ]]
+	then
+		unset COMPREPLY
+		return 0
+	fi
 
     # Complete on installed packages when unmerging.
-    if [[ "${action}" == 'unmerge' ]]; then
+    if [[ "${action}" == '--unmerge' ]]; then
 	if [[ -n "${cur}" ]] ; then
 	    if [[ "${cur}" == */* ]]; then
 		words=$(builtin cd /var/db/pkg; compgen -G "${cur}*")
@@ -591,15 +588,9 @@ _emerge()
 	fi
 	return 0
     fi
-	
+
     # Complete on packages.
-    if [[ ${COMP_CWORD} -eq 1 ]] ; then
-	if [[ $numwords -le 2 ]]; then
-	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"$'\n'"metadata"
-	else
-	    sysactions=$'\n'"system"$'\n'"world"$'\n'"sync"
-	fi
-    else
+	#
 	# Only allow these actions if no packages have been specified.
 	#
 	# TODO: This doesn't block these actions if no categories are
@@ -612,17 +603,12 @@ _emerge()
 	#
 	#            emerge -a sys-kernel/gentoo-dev-sources
 	#
-	
-        if [[ ! " ${COMP_LINE} " == *" "*[/]*" "* ]]; then
-	    sysactions=$'\n'"system"$'\n'"world"
+	if [[ ${COMP_CWORD} -eq 1 ]] || [[ ! " ${COMP_LINE} " == *" "*[/]*" "* ]] ; then
+		sysactions=$'\n'"system"$'\n'"world"
 	else
 	    sysactions=''
 	fi
-    fi
-	
-    if [[ -z "${action}" ]] && [[ ${curword} -le ${pkgpos} ]] ; then
-        eactions=$'\n'"clean"$'\n'"depclean"$'\n'"inject"$'\n'"prune"$'\n'"regen"$'\n'"search"$'\n'"unmerge"
-    fi
+
     if [[ -n "${cur}" ]] ; then
         if [[ ${cur} == virtual/* ]] ; then
             words=$(\
@@ -638,13 +624,13 @@ _emerge()
                 for pd in ${portdir} ; do \
                     builtin cd ${pd}; \
                     compgen -X "*metadata.xml" -G "${cur}*" ; \
-                done)"${sysactions}""${eactions}"
+                done)"${sysactions}"
 	else
             local ww=$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd} ; \
                     compgen -S '/' -G "${cur}*"; \
-                done)"${sysactions}""${eactions}"
+                done)"${sysactions}"
             # complete on virtuals
             ww="${ww} $(\
                 for pd in ${portdir} ; do \
@@ -669,7 +655,7 @@ _emerge()
                 words=$(for pd in ${portdir} ; do \
                             builtin cd ${pd} ; \
                             compgen -G "*-*/*" ; \
-                        done)"${sysactions}""${eactions}"
+                        done)"${sysactions}"
             fi
         fi
         COMPREPLY=($(for i in ${words} ; do \
@@ -680,7 +666,7 @@ _emerge()
             for pd in ${portdir} ; do \
                 builtin cd ${pd} ; \
                 compgen -S '/' -G "*-*" ; \
-            done)""${sysactions}""${eactions}"
+            done)""${sysactions}"
 	COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
 
