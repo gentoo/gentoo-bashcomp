@@ -698,16 +698,15 @@ _ebuild()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
-    opts="help setup fetch digest manifest unpack compile test preinst \
-    postinst install qmerge merge prerm postrm unmerge config package \
-    rpm clean"
+    opts="help setup clean fetch digest manifest unpack compile test preinst \
+        install postinst qmerge merge unmerge prerm postrm config package rpm"
 
     if [[ $COMP_CWORD -eq 1 ]] ; then
 	COMPREPLY=($(compgen -f -X "!*.ebuild" -- ${cur}) \
             $(compgen -d -- ${cur}) \
-            $(compgen -W '--debug' -- ${cur}))
+            $(compgen -W '--debug --force' -- ${cur}))
     
-    elif [[ $COMP_CWORD -eq 2 && "${COMP_WORDS[1]}" = "--debug" ]] ; then
+    elif [[ $COMP_CWORD -eq 2 && "${COMP_WORDS[1]}" = "--debug --force" ]] ; then
 	COMPREPLY=($(compgen -f -X "!*.ebuild" -- ${cur}) $(compgen -d -- ${cur}))
     
     elif [[ $COMP_CWORD -ge 2 ]] ; then

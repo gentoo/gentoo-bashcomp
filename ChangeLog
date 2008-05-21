@@ -1,7 +1,7 @@
 ChangeLog for gentoo-bashcomp
 
 2008-05-21 Tristan Heaven <nyhm@gentoo.org>
-	* Update completion for emerge.
+	* Update completion for emerge and ebuild.
 
 2008-05-13 Tristan Heaven <nyhm@gentoo.org>
 
