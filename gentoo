@@ -388,7 +388,7 @@ _emerge()
 				--tree \
 				--unmerge --update --upgradeonly --usepkg --usepkgonly \
 				--verbose \
-				--with-bdeps=y --with-bdep=n"
+				--with-bdeps=y --with-bdeps=n"
 			if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
 				opts="${opts} --help --resume --searchdesc --version"
 			fi
@@ -411,7 +411,7 @@ _emerge()
 		# already been specified on the command line.
 		COMPREPLY=($(echo "${COMP_WORDS[@]}" | \
 			(while read -d ' ' i; do
-				[[ ${i} == "" ]] && continue
+				[[ -z ${i} ]] && continue
 				# flatten array with spaces on either side,
 				# otherwise we cannot grep on word boundaries of
 				# first and last word
