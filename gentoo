@@ -1300,41 +1300,37 @@ complete -F _equery equery
 have ekeyword && {
 _ekeyword()
 {
-    local cur portdir archl_s archl_u archl_r archl_m arch
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    portdir=$(_portdir)
+	local cur portdir archl_s archl_u archl_r archl_m arch
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	portdir=$(_portdir)
 
-    [[ -f ${portdir}/profiles/arch.list ]] || return 0
+	[[ -f ${portdir}/profiles/arch.list ]] || return 0
 
-    for arch in all $(< ${portdir}/profiles/arch.list) ; do
-	archl_m="${archl_m} -${arch}"
-	archl_u="${archl_u} ~${arch}"
-	archl_r="${archl_r} ^${arch}"
-	archl_s="${archl_s}  ${arch}"
-    done
+	for arch in all $(< ${portdir}/profiles/arch.list) ; do
+		archl_m="${archl_m} -${arch}"
+		archl_u="${archl_u} ~${arch}"
+		archl_r="${archl_r} ^${arch}"
+		archl_s="${archl_s}  ${arch}"
+	done
 
-    case $cur in
-	-*)
-	    COMPREPLY=( $( compgen -W "${archl_m}" -- $cur ) )
-	    ;;
-	~*)
-	    COMPREPLY=( $( compgen -W "${archl_u}" -- $cur ) )
-	    ;;
-	^*)
-	    COMPREPLY=( $( compgen -W "${archl_r}" -- $cur ) )
-	    ;;
-	*)
-	    if [ ${COMP_CWORD} -eq 1 ] ; then
-		COMPREPLY=( $(compgen -W "${archl_s}" -- $cur ) )
-	    else
-		COMPREPLY=( $( compgen -W "${archl_s}" -- $cur ) )
-		_filedir 'ebuild'
-	    fi
-	    ;;
-    esac
+	case ${cur} in
+		-*)
+			COMPREPLY=($(compgen -W "${archl_m}" -- ${cur}))
+			;;
+		~*)
+			COMPREPLY=($(compgen -W "${archl_u}" -- ${cur}))
+			;;
+		^*)
+			COMPREPLY=($(compgen -W "${archl_r}" -- ${cur}))
+			;;
+		*)
+			COMPREPLY=($(compgen -W "${archl_s}" -- ${cur}))
+			_filedir 'ebuild'
+			;;
+		esac
 }
-complete $filenames -F _ekeyword ekeyword
+complete ${filenames} -F _ekeyword ekeyword
 }
 
 #
