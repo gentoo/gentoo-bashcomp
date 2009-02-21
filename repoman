@@ -1,0 +1,27 @@
+# repoman completion by Jeremy Olexa <darkside@gentoo.org>
+
+_repoman()
+{
+	local cur
+
+	COMPREPLY=()
+	cur=`_get_cword`
+
+	case "$cur" in
+		-*)
+		COMPREPLY=( $( compgen -W '-h --help -m -M -p --pretend -q --quiet -f \
+		--force -v --verbose -V --version -x --xmlparse -i --ignore-arches -I \
+		--ignore-masked -d --include-dev --without-mask --mode=' -- $cur ) )
+		;;
+		*)
+		if [ $COMP_CWORD -eq 1 ]; then
+			COMPREPLY=( $( compgen -W 'ci commit fix full help manifest scan' \
+			-- $cur ) )
+		fi
+		;;
+	esac
+
+	return 0
+
+}
+complete -F _repoman -o filenames repoman
