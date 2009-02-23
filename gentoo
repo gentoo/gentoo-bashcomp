@@ -377,6 +377,8 @@ _emerge()
 				--fetch-all-uri --fetchonly \
 				--getbinpkg --getbinpkgonly \
 				--ignore-default-opts --info \
+                --jobs= \
+                --keep-going \
 				--metadata \
 				--newuse --noconfmem --nodeps --noreplace --nospinner \
 				--oneshot --onlydeps \
