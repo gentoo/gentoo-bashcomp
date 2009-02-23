@@ -19,7 +19,7 @@ install:
 
 dist:
 	mkdir -p "$(distpkg)"
-	cp AUTHORS COPYING gentoo Makefile NEWS TODO "$(distpkg)/"
+	cp AUTHORS COPYING gentoo Makefile TODO "$(distpkg)/"
 	svn2cl -o "$(distpkg)/"ChangeLog
 	tar cjf "$(distpkg).tar.bz2" "$(distpkg)"
 	rm -fr "$(distpkg)/"
