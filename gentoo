@@ -1584,42 +1584,94 @@ complete -F _webapp_config webapp-config
 
 have revdep-rebuild && {
 _revdep_rebuild() {
-    local cur prev opts
+    local cur prev numwords opts
+    local words i x
+    local action actionpos
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="-X --package-names --soname --soname-regexp -q --quiet"
+    numwords=${#COMP_WORDS[*]}
 
-    if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] || \
-        [[ ${prev} == @(-q|--quiet) ]] ; then
-        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
-        return 0
+    if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
+            COMPREPLY=($(compgen -f -- ${cur}))
+            return 0
+        fi  
+
+    # find action
+    for x in ${COMP_LINE} ; do
+        if [[ ${x} =~ --(exact|help|ignore|keep-temp|library|nocolor|no-ld-path|no-order|no-progress|no-util|pretend|quiet|verbose) ]] || \
+            [[ ${x} =~ -(e|h|i|k|L|l|o|p|P|q|u|v) ]]
+        then
+            action=${x}
+            break
+        fi
+    done
+    if [[ -n ${action} ]]; then
+        for ((i = 0; i < ${numwords}; i++ )); do
+            if [[ ${COMP_WORDS[${i}]} == "${action}" ]]; then
+                actionpos=${i}
+                break
+            fi
+        done
+    
+        for ((i = 1; i < ${numwords}; i++ )); do
+            if [[ ! ${COMP_WORDS[$i]} == -* ]]; then
+                break
+            fi
+        done
     fi
 
-    case "${prev}" in
-        -X|--package-names)
-            _pkgname -I ${cur}
-            ;;
-        --soname)
-            local sonames=$(for x in /usr/lib* ; do \
-                                for lib in $(find ${x} -name '*.so*' -type f) ; do \
-                                    [[ ${lib} == *@(perl|python)* ]] || echo ${lib##*/} ; \
-                                done ; \
-                            done)
-            COMPREPLY=($(compgen -W "${sonames}" -- ${cur}))
-            ;;
-        --soname-regexp)
-            COMPREPLY=()
-            ;;
-        *)
-            if [[ ${COMP_LINE} == *" "@(-X|--package-names)* ]] ; then
-                _pkgname -I ${cur}
-                COMPREPLY=(${COMPREPLY[@]} $(compgen -W "${opts}"))
-            else
-                COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+
+    if [[ ${cur} == -* ]]; then
+        if [[ ${cur} == --* ]]; then
+            opts="--exact --help --ignore --keep-temp --library --nocolor --no-ld-path --no-order --no-progress --no-util --pretend --quiet --verbose"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        elif [[ ${cur} == -* ]]; then
+            opts="-e -h -i -k -L -l -o -p -P -q -u -v"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+        fi
+
+        
+        # NOTE: This slows things down!
+        # (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
+        # This removes any options from the list of completions that have
+        # already been specified on the command line.
+        COMPREPLY=($(echo "${COMP_WORDS[@]}" | \
+        (while read -d ' ' i; do
+            [[ -z ${i} ]] && continue
+            # flatten array with spaces on either side,
+            # otherwise we cannot grep on word boundaries of
+            # first and last word
+            COMPREPLY=" ${COMPREPLY[@]} "
+            # remove word from list of completions
+            COMPREPLY=(${COMPREPLY/ ${i%% *} / })
+        done
+        echo ${COMPREPLY[@]})))
+
+            return 0
+    fi  
+    if [[ ${action} == '--library' ]] || [[ ${action} == '-L' ]] ; then
+        if [[ "${cur}" == */* ]]; then
+            words=$(builtin cd /lib; compgen -G "${cur}*")
+        else
+            words=$(builtin cd /lib; compgen -X '/' -G "${cur}*")
+            local n=0
+            for i in ${words} ; do
+                [[ ${i} == ${cur}* ]] && n=$((n+1))
+            done
+
+            if [[ ${n} -eq 1 ]] ; then
+                words="$(builtin cd /lib ; compgen -G "*-*/*")"
             fi
-            ;;
-    esac
+        fi
+        COMPREPLY=($(for i in ${words} ; do \
+            [[ ${i} == ${cur}* ]] && echo ${i} ; \
+        done))
+        return 0
+    fi
+return 0
 }
 complete -F _revdep_rebuild revdep-rebuild
 }
