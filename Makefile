@@ -19,7 +19,7 @@ install:
 
 tag:
 	svn up
-	svn cp ../trunk ../tags/tag-$(distver)
+	svn cp ../trunk ../tags/release-$(distver)
 	@echo
 	@echo "tag created remember to check it in"
 	@echo
