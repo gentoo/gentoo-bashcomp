@@ -26,7 +26,7 @@ tag:
 
 dist: tag
 	mkdir -p "$(distpkg)"
-	cp AUTHORS COPYING gentoo repoman Makefile TODO "$(distpkg)/"
+	cp AUTHORS COPYING gentoo layman repoman Makefile TODO "$(distpkg)/"
 	svn up
 	svn2cl -o "$(distpkg)/"ChangeLog
 	tar cjf "$(distpkg).tar.bz2" "$(distpkg)"
