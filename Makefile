@@ -2,7 +2,7 @@
 # anything to build.
 
 distapp = gentoo-bashcomp
-distver := $(shell date --iso | sed -e 's~-~~g')
+distver := $(shell date +%Y%m%d)
 distpkg := $(distapp)-$(distver)
 
 PREFIX = /usr
@@ -17,7 +17,14 @@ install:
 	ln -snf "../..$(PREFIX)/share/bash-completion/gentoo" \
 		"$(DESTDIR)/etc/bash_completion.d/gentoo"
 
-dist:
+tag:
+	svn up
+	svn cp ../trunk ../tags/tag-$(distver)
+	@echo
+	@echo "tag created remember to check it in"
+	@echo
+
+dist: tag
 	mkdir -p "$(distpkg)"
 	cp AUTHORS COPYING gentoo repoman Makefile TODO "$(distpkg)/"
 	svn up
