@@ -2,7 +2,7 @@
 # anything to build.
 
 distapp = gentoo-bashcomp
-distver := $(shell date +%Y%m%d)
+distver := $(shell date -u +%Y%m%d)
 distpkg := $(distapp)-$(distver)
 
 PREFIX = /usr
