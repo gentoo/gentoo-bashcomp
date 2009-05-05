@@ -1,0 +1,75 @@
+# Gentoo Linux Layman Command Completion
+#
+# $Id$
+#
+# Copyright 1999-2009 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+#
+# Originally licensed as 'public-domain'
+# Originally written by: Peter "Link" Sterk <link@penguindevelopment.org>
+
+
+have layman && {
+	_layman()
+	{
+		local cur prev opts r_overlays l_overlays
+		opts="-a --add -d --delete -s --sync -i --info -S --sync-all -L --list \
+				 -l --list-local -f --fetch -n --nofetch -p --priority -c --config \
+			 -o --overlays -v --verbose -q --quiet -N --nocolor -Q --quietness \
+			 -k --nocheck --debug --debug-level --debug-verbose --debug-methods \
+			 --debug-classes --debug-variables --debug-class-vars --debug-nocolor"
+
+		r_overlays="$(layman -LkN 2>/dev/null | grep '(source' | awk '{print $2}')"
+		l_overlays="$(layman -lkN 2>/dev/null | grep '(source' | awk '{print $2}')"
+		ls_overlays="${l_overlays} ALL"
+
+		COMPREPLY=()
+
+		cur="${COMP_WORDS[COMP_CWORD]}"
+		prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+		if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]]
+		then
+			COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+			return 0
+		fi
+
+		case "${prev}" in
+			-a|--add)
+				COMPREPLY=($(compgen -W "${r_overlays}" -- ${cur}))
+				return 0
+			;;
+			-d|--delete)
+				COMPREPLY=($(compgen -W "${l_overlays}" -- "${cur}"))
+				return 0
+			;;
+			-s|--sync)
+				COMPREPLY=($(compgen -W "${ls_overlays}" -- "${cur}"))
+				return 0
+			;;
+			-i|--info)
+				COMPREPLY=($(compgen -W "${r_overlays}" -- "${cur}"))
+				return 0
+			;;
+			-p|--priority)
+				COMPREPLY=($(compgen -W "$(seq 0 100)" -- "${cur}"))
+				return 0
+			;;
+			-Q|--quietness)
+				COMPREPLY=($(compgen -W "$(seq 0 4)" -- "${cur}"))
+				return 0
+			;;
+			--debug-level)
+				COMPREPLY=($(compgen -W "$(seq 0 10)" -- "${cur}"))
+				return 0
+			;;
+			--debug-verbose)
+				COMPREPLY=($(compgen -W "$(seq 1 3)" -- "${cur}"))
+				return 0
+			;;
+		esac
+	}
+	complete -F _layman layman
+}
+
+# vim: set ft=sh tw=80 sw=4 et :
