@@ -1,10 +1,14 @@
 Maintainers
 ===========
+Jeremy Olexa <darkside@gentoo.org>
+
+Previous Maintainers
+====================
 Aaron Walker <ka0ttic@gentoo.org>
 Zach Forrest <zorder@users.sourceforge.net>
 
-Authors
-=======
+Previous Authors
+================
 Geert Bevin  <gbevin@theleaf.be> (original author)
 Zach Forrest <zorder@users.sourceforge.net>
 
@@ -25,6 +29,10 @@ Ciaran McCreesh <ciaranm@gentoo.org>
 Thomas de Grenier de Latour <degrenier@easyconnect.fr>
  - _list_compgen() author
  - equery files --filter completion
+
+Peter "Link" Sterk <link@penguindevelopment.org>
+ - original layman completion (licensed under public-domain)
+ - http://www.penguindevelopment.org/
 
 Note
 ====
