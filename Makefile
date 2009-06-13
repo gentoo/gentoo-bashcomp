@@ -18,7 +18,7 @@ install:
 		"$(DESTDIR)/etc/bash_completion.d/gentoo"
 
 tag:
-	svn up
+	svn up ../
 	svn cp ../trunk ../tags/release-$(distver)
 	@echo
 	@echo "tag created remember to check it in"
