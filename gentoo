@@ -701,7 +701,8 @@ _ebuild()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     opts="help setup clean fetch digest manifest unpack compile test preinst \
-        install postinst qmerge merge unmerge prerm postrm config package rpm"
+        install postinst qmerge merge unmerge prerm postrm config package rpm \
+        configure prepare"
 
     if [[ $COMP_CWORD -eq 1 ]] ; then
     COMPREPLY=($(compgen -f -X "!*.ebuild" -- ${cur}) \
