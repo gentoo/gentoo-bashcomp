@@ -1218,8 +1218,8 @@ _equery()
                 COMPREPLY=($(compgen -W "--help -U --no-useflags -l --linear" -- $cur))
             ;;
             *)
-            # Complete on installed package names.
-            _pkgname -I $cur
+            # Complete on all package names.
+            _pkgname -A $cur
             ;;
         esac
         fi
