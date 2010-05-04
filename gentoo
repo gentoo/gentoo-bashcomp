@@ -93,11 +93,14 @@ _pkgname()
         if [[ $cur == */* ]]; then
             # Once the category has been completed, it's safe to use ${portdir}
             # to continue completion.
+                local ww=$(\
+                    for pd in ${portdir} ; do
+                        builtin cd ${pd};
+                        compgen -W "$(compgen -G "${cur}*")" -- "${cur}" ;
+                    done)
                 COMPREPLY=($(\
-                    for pd in ${portdir} ; do \
-                        builtin cd ${pd}; \
-                        compgen -W "$(compgen -G "${cur}*")" -- "${cur}" ; \
-                    done))
+                    for x in ${ww}; do echo $x; done|sort -u
+                        ))
             # When we've completed most of the name, also display the version for
             # possible completion.
             if [[ ${#COMPREPLY[@]} -le 1 || ${cur:${#cur}-1:1} == "-" ]] && 
@@ -112,13 +115,19 @@ _pkgname()
                         done))
             fi
         else
-        COMPREPLY=( $(compgen -W "$(\
-                    for pd in ${portdir} ; do \
-                        if [[ -d ${pd}/metadata/cache ]] ; then
-                            builtin cd ${pd}/metadata/cache; \
-                            compgen -G "$cur*" -S / ; \
-                        fi ; \
-                    done)" -- $cur) )
+            # 1. Collect all the categories among ${portdir}
+            local ww=$(\
+                for pd in ${portdir}; do
+                    builtin cd ${pd};
+                    compgen -X "!@(*-*|virtual)" -S '/' -G "$cur*";
+                done)
+
+            # 2. Now ugly hack to delete duplicate categories
+            local w x
+            for x in ${ww} ; do w="${x}\n${w}"; done
+            local words=$(echo -e ${w} | sort -u)
+
+            COMPREPLY=($(compgen -W "$words" -- $cur))
                 if [[ ${#COMPREPLY[@]} == 1 ]]; then
             COMPREPLY=($(compgen -W "$(\
                     for pd in ${portdir} ; do \
