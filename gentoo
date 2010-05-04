@@ -621,26 +621,17 @@ _emerge()
     fi
 
     if [[ -n "${cur}" ]] ; then
-        if [[ ${cur} == virtual/* ]] ; then
+        if [[ ${cur} == */* ]] ; then
             words=$(\
-                for pd in ${portdir} ; do \
-                    if [[ -d ${pd}/profiles ]] ; then
-                        find ${pd}/profiles -name virtuals -exec \
-                            sed -n -e 's|^\(virtual/[[:alnum:]]\+\).*$|\1|p' {} \; | \
-                            sort -u
-                    fi ; \
-                done)
-    elif [[ ${cur} == */* ]] ; then
-        words=$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd}; \
                     compgen -X "*metadata.xml" -G "${cur}*" ; \
                 done)"${sysactions}"
-    else
+        else
             local ww=$(\
                 for pd in ${portdir} ; do \
                     builtin cd ${pd} ; \
-                    compgen -S '/' -G "${cur}*"; \
+                    compgen -X "!@(*-*|virtual)" -S '/' -G "${cur}*"; \
                 done)"${sysactions}"
             # complete on virtuals
             ww="${ww} $(\
