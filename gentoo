@@ -1251,9 +1251,15 @@ _equery()
         # Only complete if the previous entry on the command line is not
         # a package name.
         if [[ ${prev} == ${mode} ]]; then
-        # Only installed packages can have their integrity verified.
-        _pkgname -I $cur
-                COMPREPLY=($(compgen -W "${COMPREPLY[@]} --help" -- ${cur}))
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "${COMPREPLY[@]} --help" -- ${cur}))
+                ;;
+                *)
+                # Only installed packages can have their integrity verified.
+                    _pkgname -I $cur
+                ;;
+            esac
         fi
         ;;
     s?(ize))
