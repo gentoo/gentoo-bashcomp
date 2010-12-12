@@ -717,7 +717,7 @@ _ebuild()
     fi
     return 0
 }
-complete $filenames -F _ebuild ebuild
+complete -o filenames -F _ebuild ebuild
 }
 
 #
@@ -1353,7 +1353,7 @@ _ekeyword()
             ;;
         esac
 }
-complete ${filenames} -F _ekeyword ekeyword
+complete -o filenames -F _ekeyword ekeyword
 }
 
 #
