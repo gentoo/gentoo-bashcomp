@@ -1619,80 +1619,37 @@ _revdep_rebuild() {
         fi  
 
     # find action
-    for x in ${COMP_LINE} ; do
-        if [[ ${x} =~ --(exact|help|ignore|keep-temp|library|nocolor|no-ld-path|no-order|no-progress|no-util|pretend|quiet|verbose) ]] || \
-            [[ ${x} =~ -(e|h|i|k|L|l|o|p|P|q|u|v) ]]
-        then
-            action=${x}
-            break
-        fi
-    done
-    if [[ -n ${action} ]]; then
-        for ((i = 0; i < ${numwords}; i++ )); do
-            if [[ ${COMP_WORDS[${i}]} == "${action}" ]]; then
+    for ((i = 0; i < ${numwords}; i++ )); do
+        case ${COMP_WORDS[${i}]} in
+            --library|-L)
+                action=${COMP_WORDS[${i}]}
                 actionpos=${i}
-                break
-            fi
-        done
-    
-        for ((i = 1; i < ${numwords}; i++ )); do
-            if [[ ! ${COMP_WORDS[$i]} == -* ]]; then
-                break
-            fi
-        done
-    fi
-
+                ;;
+            --help|-h)
+                action=${COMP_WORDS[${i}]}
+                actionpos=${i}
+                ;;
+        esac
+    done
 
     if [[ ${cur} == -* ]]; then
         if [[ ${cur} == --* ]]; then
             opts="--exact --help --ignore --keep-temp --library --nocolor --no-ld-path --no-order --no-progress --no-util --pretend --quiet --verbose"
             COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            return 0
-        elif [[ ${cur} == -* ]]; then
+        else
             opts="-e -h -i -k -L -l -o -p -P -q -u -v"
             COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            return 0
         fi
-
-        
-        # NOTE: This slows things down!
-        # (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
-        # This removes any options from the list of completions that have
-        # already been specified on the command line.
-        COMPREPLY=($(echo "${COMP_WORDS[@]}" | \
-        (while read -d ' ' i; do
-            [[ -z ${i} ]] && continue
-            # flatten array with spaces on either side,
-            # otherwise we cannot grep on word boundaries of
-            # first and last word
-            COMPREPLY=" ${COMPREPLY[@]} "
-            # remove word from list of completions
-            COMPREPLY=(${COMPREPLY/ ${i%% *} / })
-        done
-        echo ${COMPREPLY[@]})))
-
-            return 0
+        return 0
     fi  
     if [[ ${action} == '--library' ]] || [[ ${action} == '-L' ]] ; then
         if [[ "${cur}" == */* ]]; then
-            words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/lib; compgen -G "${cur}*")
+            COMPREPLY=( $(builtin cd @GENTOO_PORTAGE_EPREFIX@/lib; compgen -f -- "${cur}") )
         else
-            words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/lib; compgen -X '/' -G "${cur}*")
-            local n=0
-            for i in ${words} ; do
-                [[ ${i} == ${cur}* ]] && n=$((n+1))
-            done
-
-            if [[ ${n} -eq 1 ]] ; then
-                words="$(builtin cd @GENTOO_PORTAGE_EPREFIX@/lib ; compgen -G "*-*/*")"
-            fi
+            COMPREPLY=( $(builtin cd @GENTOO_PORTAGE_EPREFIX@/lib; compgen -X '/' -f -- "${cur}") )
         fi
-        COMPREPLY=($(for i in ${words} ; do \
-            [[ ${i} == ${cur}* ]] && echo ${i} ; \
-        done))
-        return 0
     fi
-return 0
+    return 0
 }
 complete -F _revdep_rebuild revdep-rebuild
 }
