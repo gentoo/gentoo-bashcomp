@@ -18,19 +18,19 @@ install:
 		"$(DESTDIR)/etc/bash_completion.d/gentoo"
 
 tag:
-	svn up ../
-	svn cp ../trunk ../tags/release-$(distver)
+	git pull
+	git tag $(distpkg)
 	@echo
-	@echo "tag created remember to check it in"
+	@echo "tag created remember to push it"
 	@echo
 
 dist: tag
-	mkdir -p "$(distpkg)"
-	cp AUTHORS COPYING gentoo layman repoman Makefile TODO "$(distpkg)/"
-	svn up
-	svn2cl -o "$(distpkg)/"ChangeLog
-	tar cjf "$(distpkg).tar.bz2" "$(distpkg)"
-	rm -fr "$(distpkg)/"
+	git archive --prefix=$(distpkg)/ --format=tar -o $(distpkg).tar $(distpkg)
+	mkdir $(distpkg)/
+	git log > $(distpkg)/ChangeLog
+	tar vfr $(distpkg).tar $(distpkg)/ChangeLog
+	bzip2 $(distpkg).tar
+	rm -rf $(distpkg)/
 	@echo "success."
 
 dist-upload: dist
