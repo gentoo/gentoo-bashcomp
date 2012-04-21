@@ -1139,8 +1139,8 @@ _equery()
                 -W "dir obj sym dev fifo path conf cmd doc man info"))
             ;;
             -*)
-            COMPREPLY=($(compgen -W "--help --timestamp --md5sum
-                        --type --filter=" -- $cur))
+            COMPREPLY=($(compgen -W "-h --help -m --md5sum -s --timestamp -t
+                --type --tree -f --filter=" -- $cur))
             ;;
             *)
             # Only installed packages can have their files listed.
@@ -1155,7 +1155,10 @@ _equery()
         if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
         case "${cur}" in
             -*)
-            COMPREPLY=($(compgen -W "--help -i --installed -I --exclude-installed -p --portage-tree -o --overlay-tree" -- $cur))
+            COMPREPLY=($(compgen -W "-h --help -d --duplicates -b
+                --missing-binpkgs -f --full-regex -m --mask-reason -I
+                --exclude-installed -o --overlay-tree -p --portage-tree -F
+                --format" -- $cur))
             ;;
             *)
                         case "${prev}" in
@@ -1188,7 +1191,8 @@ _equery()
         then
         case $cur in
             -*)
-                COMPREPLY=($(compgen -W "--help -c --category -e --earlyout" -- $cur))
+                COMPREPLY=($(compgen -W "-h --help -f --full-regex -e
+                    --early-out -n --name-only" -- $cur))
                 ;;
             *)
                 COMPREPLY=($(compgen -f -- $cur) \
@@ -1236,7 +1240,8 @@ _equery()
         if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
             case $cur in
             -*)
-                COMPREPLY=($(compgen -W "--help -U --no-useflags -l --linear" -- $cur))
+                COMPREPLY=($(compgen -W "-h --help -A --no-atom -M --no-mask -U
+                    --no-useflags -l --linear --depth" -- $cur))
             ;;
             *)
             # Complete on all package names.
@@ -1251,7 +1256,8 @@ _equery()
         if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
         case $cur in
             -*)
-                COMPREPLY=($(compgen -W "--help -a --all-packages -d --direct -D --indirect" -- $cur))
+                COMPREPLY=($(compgen -W "-h --help -a --all-packages -D
+                    --indirect --depth" -- $cur))
             ;;
             *)
             case $prev in
@@ -1288,7 +1294,8 @@ _equery()
         if [[ ${prev} == ${mode} ]]; then
             case $cur in
                 -*)
-                    COMPREPLY=($(compgen -W "${COMPREPLY[@]} --help" -- ${cur}))
+                    COMPREPLY=($(compgen -W "${COMPREPLY[@]} -h --help -f
+                        --full-regex -o --only-failures" -- ${cur}))
                 ;;
                 *)
                 # Only installed packages can have their integrity verified.
@@ -1303,7 +1310,8 @@ _equery()
         if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
         case $cur in
             -*)
-            COMPREPLY=($(compgen -W "--help -b --bytes" -- $cur))
+            COMPREPLY=($(compgen -W "-h --help -b --bytes -f
+                --full-regex" -- $cur))
             ;;
             *)
             # Only installed packages can have their size calculated.
