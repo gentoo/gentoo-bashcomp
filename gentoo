@@ -1118,9 +1118,28 @@ _equery()
             ;;
         esac
         ;;
-    c?(hanges)|a|glsa|t|stats)
+    a|glsa|t|stats)
         # These commands have not been implemented in 'equery' yet ...
         echo -n "# Not implemented! "
+        ;;
+    c?(hanges))
+        # Complete package name only if it is not yet supplied. 
+        if [[ ${prev} == ${mode} ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help" -- $cur))
+                ;;
+                *)
+                    _pkgname -A $cur
+                ;;
+            esac
+        else
+            case $cur in
+                *)
+                    COMPREPLY=($(compgen -W "-h --help -l --latest -f --full --limit --from --to" -- $cur))
+                ;;
+            esac
+        fi
         ;;
     f?(iles))
         # Only complete if the previous entry on the command line is not
