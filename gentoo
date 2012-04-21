@@ -1099,7 +1099,7 @@ _equery()
         if [[ $j -lt $COMP_CWORD ]]; then
         j=$((j + 1))
         case $i in
-                @(belongs|ch@(anges|eck)|dep@(ends|graph)|files|glsa|list|meta|s@(ize|tats)|uses|which|hasuse|b|c|k|d|g|f|a|h|l|m|s|t|u|w))
+            @(belongs|ch@(anges|eck)|dep@(ends|graph)|files|has?(use)|keywords|list|meta|size|uses|which|b|c|k|d|g|f|a|h|y|l|m|s|u|w))
             mode=$i
             ;;
         esac
@@ -1114,11 +1114,11 @@ _equery()
             COMPREPLY=($(compgen -W "-q --quiet -C --nocolor -h --help -V --version" -- $cur))
             ;;
         *)
-            COMPREPLY=($(compgen -W "belongs changes check depends depgraph files glsa hasuse list meta size stats uses which" -- $cur))
+            COMPREPLY=($(compgen -W "belongs changes check depends depgraph files has hasuse keywords list meta size uses which" -- $cur))
             ;;
         esac
         ;;
-    a|glsa|t|stats)
+    a|has|y|keywords)
         # These commands have not been implemented in 'equery' yet ...
         echo -n "# Not implemented! "
         ;;
