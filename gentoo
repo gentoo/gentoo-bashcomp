@@ -1200,13 +1200,34 @@ _equery()
         COMPREPLY=($(builtin cd ${portdir}/metadata/cache; compgen -W "$(compgen -G '*')" -- $cur))
         fi
         ;;
-    @(u?(ses)|w?(hich)))
+    u?(ses))
         # Only complete if the previous entry on the command line is not
         # a package name.
-        if [[ ${prev} == ${mode} ]]; then
-            # Complete on all package names.
-            _pkgname -A $cur
-                COMPREPLY=($(compgen -W "${COMPREPLY[@]} --help" -- ${cur}))
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help -a --all" -- $cur))
+                ;;
+                *)
+                    # Complete on all package names.
+                    _pkgname -A $cur
+                ;;
+            esac
+        fi
+        ;;
+    w?(hich))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help -m --include-masked" -- $cur))
+                ;;
+                *)
+                    # Complete on all package names.
+                    _pkgname -A $cur
+                ;;
+            esac
         fi
         ;;
     g|depgraph)
