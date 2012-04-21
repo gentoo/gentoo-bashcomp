@@ -1177,31 +1177,17 @@ _equery()
     b?(elongs))
         # Only complete if the previous entry on the command line is not
         # a file name.
-        if \
-            [[ \
-            ${prev} == ${mode} || \
-            ${prev:0:1} == "-" || \
-            ${COMP_WORDS[COMP_CWORD-2]} == "-c" || \
-            ${COMP_WORDS[COMP_CWORD-2]} == "--category" \
-        ]] && \
-        [[ \
-            ${prev} != "-c" && \
-            ${prev} != "--category" \
-        ]]
-        then
-        case $cur in
-            -*)
-                COMPREPLY=($(compgen -W "-h --help -f --full-regex -e
-                    --early-out -n --name-only" -- $cur))
-                ;;
-            *)
-                COMPREPLY=($(compgen -f -- $cur) \
-                    $(compgen -d -S '/' -- $cur))
-                ;;
-        esac
-        # Are we completing a category?
-        elif [[ ${prev} == "-c" || ${prev} == "--category" ]]; then
-        COMPREPLY=($(builtin cd ${portdir}/metadata/cache; compgen -W "$(compgen -G '*')" -- $cur))
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help -f --full-regex -e
+                        --early-out -n --name-only" -- $cur))
+                    ;;
+                *)
+                    COMPREPLY=($(compgen -f -- $cur) \
+                        $(compgen -d -S '/' -- $cur))
+                    ;;
+            esac
         fi
         ;;
     u?(ses))
