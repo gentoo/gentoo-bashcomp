@@ -1118,10 +1118,6 @@ _equery()
             ;;
         esac
         ;;
-    y|keywords)
-        # These commands have not been implemented in 'equery' yet ...
-        echo -n "# Not implemented! "
-        ;;
     c?(hanges))
         # Complete package name only if it is not yet supplied. 
         if [[ ${prev} == ${mode} ]]; then
@@ -1171,6 +1167,22 @@ _equery()
     a|has)
         COMPREPLY=($(compgen -W "-h --help -I --exclude-installed -o \
              --overlay-tree -p --portage-tree -F --format" -- $cur))
+        ;;
+    y|keywords)
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case "${cur}" in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help -v --version -a --arch -A
+                    --align -T --top-position -B --bold -C --color -O --overlays
+                    -P --prefix -S --ignore-slot" -- $cur))
+                    ;;
+                *)
+                    _pkgname -A $cur
+                    ;;
+            esac
+        fi
         ;;
     l?(ist))
         # Only complete if the previous entry on the command line is not
