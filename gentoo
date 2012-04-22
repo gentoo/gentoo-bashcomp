@@ -1118,7 +1118,7 @@ _equery()
             ;;
         esac
         ;;
-    a|has|y|keywords)
+    y|keywords)
         # These commands have not been implemented in 'equery' yet ...
         echo -n "# Not implemented! "
         ;;
@@ -1167,6 +1167,10 @@ _equery()
             ;;
         esac
         fi
+        ;;
+    a|has)
+        COMPREPLY=($(compgen -W "-h --help -I --exclude-installed -o \
+             --overlay-tree -p --portage-tree -F --format" -- $cur))
         ;;
     l?(ist))
         # Only complete if the previous entry on the command line is not
