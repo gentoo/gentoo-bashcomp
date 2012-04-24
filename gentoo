@@ -1191,18 +1191,18 @@ _equery()
         case "${cur}" in
             -*)
             COMPREPLY=($(compgen -W "-h --help -d --duplicates -b
-                --missing-binpkgs -f --full-regex -m --mask-reason -I
+                --binpkgs-missing -f --full-regex -m --mask-reason -I
                 --exclude-installed -o --overlay-tree -p --portage-tree -F
                 --format" -- $cur))
             ;;
             *)
                         case "${prev}" in
-                            -i|--installed)
-                                _pkgname -I $cur
+                            -p|--?(portage|overlay)-tree)
+                                _pkgname -A $cur
                                 ;;
                             *)
-                    # Complete on all package names.
-                    _pkgname -A $cur
+                    # Complete on installed package names by default.
+                    _pkgname -I $cur
                     ;;
                         esac
                         ;;
