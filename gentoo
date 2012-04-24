@@ -1196,17 +1196,14 @@ _equery()
                 --format" -- $cur))
             ;;
             *)
-                        case "${prev}" in
-                            -p|--?(portage|overlay)-tree)
-                                _pkgname -A $cur
-                                ;;
-                            *)
-                    # Complete on installed package names by default.
+                if [[ ${COMP_WORDS[@]} =~ -(p|o) || ${COMP_WORDS[@]} =~ --(portage|overlay)-tree ]]; then
+                    _pkgname -A $cur
+                else
                     _pkgname -I $cur
-                    ;;
-                        esac
-                        ;;
+                fi
+            ;;
         esac
+        dupa=${COMP_WORDS[@]}
         fi
         ;;
     b?(elongs))
