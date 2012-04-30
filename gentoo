@@ -1082,6 +1082,24 @@ complete -F _browserconfig browser-config
 }
 
 #
+# Helper routine for the subcommand 'meta' of 'equery'
+# (Used two times, by _equery and _epkginfo, therefore in an extra function)
+#
+_equery_meta()
+{
+    local cur="$1"
+
+    case $cur in
+        -*)
+            COMPREPLY=($(compgen -W "--help -h --description -d --herd -H --keywords -k --maintainer -m --useflags -u --upstream -U --xml -x" -- $cur))
+            ;;
+        *)
+            _pkgname -A $cur
+            ;;
+    esac
+}
+
+#
 # Bash completion for the Gentoo 'equery' command
 #
 have equery && {
@@ -1296,14 +1314,7 @@ _equery()
         # Only complete if the previous entry on the command line is not
         # a package name.
         if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
-        case $cur in
-            -*)
-                COMPREPLY=($(compgen -W "--help -h --description -d --herd -H --keywords -k --maintainer -m --useflags -u --upstream -U --xml -x" -- $cur))
-            ;;
-            *)
-                _pkgname -A $cur
-            ;;
-        esac
+            _equery_meta $cur
         fi
         ;;
     k|check)
@@ -1361,6 +1372,28 @@ _equery()
     return 0
 }
 complete -F _equery equery
+}
+
+#
+# epkginfo completion
+#
+
+have epkginfo && {
+_epkginfo()
+{
+    local cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Only complete if the previous entry on the command line is not
+    # a package name.
+    if [[ ${COMP_CWORD} -eq 1 || ${prev:0:1} == "-" ]]; then
+        _equery_meta $cur
+    fi
+
+    return 0
+}
+complete -F _epkginfo epkginfo
 }
 
 #
