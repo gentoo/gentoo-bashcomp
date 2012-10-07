@@ -1,0 +1,11 @@
+*~
+*.swp
+*.tmp
+
+*.bz2
+*.tar
+
+*.diff
+*.orig
+*.patch
+*.rej
