@@ -23,6 +23,7 @@ _portdir()
     (
     source @GENTOO_PORTAGE_EPREFIX@/usr/share/portage/config/make.globals 2>/dev/null
     source @GENTOO_PORTAGE_EPREFIX@/etc/make.conf 2>/dev/null
+    source @GENTOO_PORTAGE_EPREFIX@/etc/portage/make.conf 2>/dev/null
 
     echo ${PORTDIR}
     if [[ $1 == '-o' ]] ; then
