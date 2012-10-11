@@ -104,16 +104,20 @@ _pkgname()
                         ))
             # When we've completed most of the name, also display the version for
             # possible completion.
-            if [[ ${#COMPREPLY[@]} -le 1 || ${cur:${#cur}-1:1} == "-" ]] && 
-                    [[ ${cur} != */ ]]; then
-            # The portage cache is appropriate to complete specific versions from.
-            COMPREPLY=(${COMPREPLY[@]} $(\
-                        for pd in ${portdir} ; do \
-                            if [[ -d ${pd}/metadata/cache ]] ; then \
-                                builtin cd ${pd}/metadata/cache; \
-                                compgen -W "$(compgen -G "${cur}*")" -- "${cur}" ; \
-                            fi ; \
-                        done))
+            if [[ ${#COMPREPLY[@]} -le 1 || ${cur:${#cur}-1:1} == "-" ]] \
+                && [[ ${cur} != */ ]]; then
+                    # Use the portage cache to complete specific versions from
+                    COMPREPLY=(${COMPREPLY[@]} $(
+                        for pd in ${portdir}; do
+                            if [[ -d ${pd}/metadata/md5-cache ]]; then
+                                builtin cd ${pd}/metadata/md5-cache
+                                compgen -W "$(compgen -G "${cur}*")" -- "${cur}"
+                            elif [[ -d ${pd}/metadata/cache ]]; then
+                                builtin cd ${pd}/metadata/cache
+                                compgen -W "$(compgen -G "${cur}*")" -- "${cur}"
+                            fi
+                        done
+                    ))
             fi
         else
             # 1. Collect all the categories among ${portdir}
@@ -129,14 +133,19 @@ _pkgname()
             local words=$(echo -e ${w} | sort -u)
 
             COMPREPLY=($(compgen -W "$words" -- $cur))
-                if [[ ${#COMPREPLY[@]} == 1 ]]; then
-            COMPREPLY=($(compgen -W "$(\
-                    for pd in ${portdir} ; do \
-                        if [[ -d ${pd}/metadata/cache ]] ; then
-                            builtin cd ${pd}/metadata/cache; \
-                            compgen -G "$COMPREPLY*" ; \
-                        fi ; \
-                    done)" -- $cur))
+
+            if [[ ${#COMPREPLY[@]} == 1 ]]; then
+                COMPREPLY=($(compgen -W "$(
+                    for pd in ${portdir}; do
+                        if [[ -d ${pd}/metadata/md5-cache ]]; then
+                            builtin cd ${pd}/metadata/md5-cache
+                            compgen -G "$COMPREPLY*"
+                        elif [[ -d ${pd}/metadata/cache ]]; then
+                            builtin cd ${pd}/metadata/cache
+                            compgen -G "$COMPREPLY*"
+                        fi
+                    done
+                )" -- $cur))
             fi
         fi
 
@@ -516,29 +525,33 @@ _emerge()
                 COMPREPLY=( ${words} )
         
                 # Complete on the specific versions (if appropriate).
-                if [[ ${#COMPREPLY[@]} -le 1 ]] ; then
-            COMPREPLY=($(\
-                        for pd in ${portdir} ; do \
-                            if [[ -d ${pd}/metadata/cache ]] ; then
-                                builtin cd ${pd}/metadata/cache; \
-                                compgen ${prepend} -G "${cur}*" -- "${cur}" ; \
-                            else \
-                                builtin cd ${pd} ; \
-                                local cat="${cur%/*}" ; \
-                                local pkg="$(echo ${cur%-[0-9]*}*)" ; \
-                                pkg="${pkg##*/}" ; \
-                                for x in ${cat}/${pkg}/*.ebuild ; do \
-                                    [[ -f "${x}" ]] || continue ; \
-                                    x="${x/${pkg}\/}" ; \
-                                    if [[ ${cond:0:1} == "'" ]] || \
-                                        [[ ${cond:0:1} == '"' ]] ; then 
-                                        echo "${c}${x%*.ebuild}" ; \
+                # TODO - see if we can use _pkgname
+                if [[ ${#COMPREPLY[@]} -le 1 ]]; then
+                    COMPREPLY=($(
+                        for pd in ${portdir}; do
+                            if [[ -d ${pd}/metadata/md5-cache ]]; then
+                                builtin cd ${pd}/metadata/md5-cache
+                                compgen ${prepend} -G "${cur}*" -- "${cur}"
+                            elif [[ -d ${pd}/metadata/cache ]]; then
+                                builtin cd ${pd}/metadata/cache
+                                compgen ${prepend} -G "${cur}*" -- "${cur}"
+                            else
+                                builtin cd ${pd}
+                                local cat="${cur%/*}"
+                                local pkg="$(echo ${cur%-[0-9]*}*)"
+                                pkg="${pkg##*/}"
+                                for x in ${cat}/${pkg}/*.ebuild; do
+                                    [[ -f "${x}" ]] || continue
+                                    x="${x/${pkg}\/}"
+                                    if [[ ${cond:0:1} == "'" ]] || [[ ${cond:0:1} == '"' ]]; then
+                                        echo "${c}${x%*.ebuild}"
                                     else
-                                        echo "${x%*.ebuild}" ; \
-                                    fi ; \
-                                done ; \
-                            fi ; \
-                        done))
+                                        echo "${x%*.ebuild}"
+                                    fi
+                                done
+                            fi
+                        done
+                    ))
                 else
                     COMPREPLY=($(compgen ${prepend} -W "${words}" -- $cur))
                 fi
@@ -585,17 +598,23 @@ _emerge()
         COMPREPLY=($(compgen ${prepend} -W "${words}" -- ${cur}))
 
         if [[ ${#COMPREPLY[@]} -le 1 ]]; then
-        # Now complete on the specific versions.
-        words="$(\
-                    for pd in ${portdir} ; do \
-                        if [[ -d ${pd}/metadata/cache ]] ; then \
-                            builtin cd ${pd}/metadata/cache; \
-                            for i in */${cur}*; do \
-                                [[ -f $i ]] && echo ${i##*/}; \
-                            done ; \
-                        fi ; \
-                    done)"
-        COMPREPLY=($(compgen ${prepend} -W "${words}" -- "${cur}"))
+            # Now complete on the specific versions.
+            words="$(
+                for pd in ${portdir}; do
+                    if [[ -d ${pd}/metadata/md5-cache ]]; then
+                        builtin cd ${pd}/metadata/md5-cache
+                        for i in */${cur}*; do
+                            [[ -f $i ]] && echo ${i##*/}
+                        done
+                    elif [[ -d ${pd}/metadata/cache ]]; then
+                        builtin cd ${pd}/metadata/cache
+                        for i in */${cur}*; do
+                            [[ -f $i ]] && echo ${i##*/}
+                        done
+                    fi
+                done
+            )"
+            COMPREPLY=($(compgen ${prepend} -W "${words}" -- "${cur}"))
         fi
     fi
     return 0
