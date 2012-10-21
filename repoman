@@ -2,33 +2,63 @@
 #
 # $Id$
 #
-# Copyright 1999-2009 Gentoo Foundation
+# Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License, v2 or later
 
 # repoman completion by Jeremy Olexa <darkside@gentoo.org>
+# rewrite by Ryan Hill <dirtyepic@gentoo.org>
 
 _repoman()
 {
-	local cur
+	local cur prev opts modes split=false
 
 	COMPREPLY=()
-	cur=`_get_cword`
+	opts="$(_parse_help ${COMP_WORDS[0]}) --commitmsg --commitmsgfile"
+	modes="ci commit fix full help manifest manifest-check scan"
 
-	case "$cur" in
+	_get_comp_words_by_ref -n = cur prev
+	_split_longopt && split=true
+
+		case $prev in
+		-h|--help|help|-m|--commitmsg|-V|--version)
+			return 0
+			;;
+		--commitmsgfile)
+			_filedir
+			return 0
+			;;
+		--digest|--if-modified)
+			COMPREPLY=( $(compgen -W 'y n' -- "$cur") )
+			return 0
+			;;
+		--echangelog)
+			COMPREPLY=( $(compgen -W 'y n force' -- "$cur") )
+			return 0
+			;;
+		--mode)
+			COMPREPLY=( $(compgen -W "${modes}" -- "$cur") )
+			return 0
+			;;
+		--vcs)
+			COMPREPLY=( $(compgen -W 'cvs svn git bzr hg' -- "$cur") )
+			return 0
+			;;
+	esac
+
+	$split && return 0
+
+	case $cur in
 		-*)
-		COMPREPLY=( $( compgen -W '-h --help -m -M -p --pretend -q --quiet -f \
-		--force -v --verbose -V --version -x --xmlparse -i --ignore-arches -I \
-		--ignore-masked -d --include-dev --without-mask --mode=' -- $cur ) )
-		;;
+			COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+			return 0
+			;;
 		*)
-		if [ $COMP_CWORD -eq 1 ]; then
-			COMPREPLY=( $( compgen -W 'ci commit fix full help manifest scan' \
-			-- $cur ) )
-		fi
-		;;
+			COMPREPLY=( $(compgen -W "$modes" -- "$cur") )
+			return 0
+			;;
 	esac
 
 	return 0
-
 }
-complete -F _repoman -o filenames repoman
+
+complete -F _repoman repoman
