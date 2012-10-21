@@ -10,55 +10,56 @@
 
 _repoman()
 {
-	local cur prev opts modes split=false
+    local cur prev opts modes split=false
 
-	COMPREPLY=()
-	opts="$(_parse_help ${COMP_WORDS[0]}) --commitmsg --commitmsgfile"
-	modes="ci commit fix full help manifest manifest-check scan"
+    COMPREPLY=()
+    opts="$(_parse_help ${COMP_WORDS[0]}) --commitmsg --commitmsgfile"
+    modes="ci commit fix full help manifest manifest-check scan"
 
-	_get_comp_words_by_ref -n = cur prev
-	_split_longopt && split=true
+    _get_comp_words_by_ref -n = cur prev
+    _split_longopt && split=true
 
-		case $prev in
-		-h|--help|help|-m|--commitmsg|-V|--version)
-			return 0
-			;;
-		--commitmsgfile)
-			_filedir
-			return 0
-			;;
-		--digest|--if-modified)
-			COMPREPLY=( $(compgen -W 'y n' -- "$cur") )
-			return 0
-			;;
-		--echangelog)
-			COMPREPLY=( $(compgen -W 'y n force' -- "$cur") )
-			return 0
-			;;
-		--mode)
-			COMPREPLY=( $(compgen -W "${modes}" -- "$cur") )
-			return 0
-			;;
-		--vcs)
-			COMPREPLY=( $(compgen -W 'cvs svn git bzr hg' -- "$cur") )
-			return 0
-			;;
-	esac
+    case $prev in
+        -h|--help|help|-m|--commitmsg|-V|--version)
+            return 0
+            ;;
+        --commitmsgfile)
+            _filedir
+            return 0
+            ;;
+        --digest|--if-modified)
+            COMPREPLY=( $(compgen -W 'y n' -- "$cur") )
+            return 0
+            ;;
+        --echangelog)
+            COMPREPLY=( $(compgen -W 'y n force' -- "$cur") )
+            return 0
+            ;;
+        --mode)
+            COMPREPLY=( $(compgen -W "${modes}" -- "$cur") )
+            return 0
+            ;;
+        --vcs)
+            COMPREPLY=( $(compgen -W 'cvs svn git bzr hg' -- "$cur") )
+            return 0
+            ;;
+    esac
 
-	$split && return 0
+    $split && return 0
 
-	case $cur in
-		-*)
-			COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
-			return 0
-			;;
-		*)
-			COMPREPLY=( $(compgen -W "$modes" -- "$cur") )
-			return 0
-			;;
-	esac
+    case $cur in
+        -*)
+            COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+            return 0
+            ;;
+        *)
+            COMPREPLY=( $(compgen -W "$modes" -- "$cur") )
+            return 0
+            ;;
+    esac
 
-	return 0
+    return 0
 }
 
 complete -F _repoman repoman
+# vim: ft=sh:et:ts=4:sw=4:tw=80
