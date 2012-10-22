@@ -1906,34 +1906,30 @@ _epm() {
 complete -o filenames -F _epm epm
 }
 
-#
-# metagen completion
-#
-
-have metagen && {
+have metagen &&
 _metagen() {
     local cur prev opts
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="-h --help -H -e -n -m -d -l -o -f -v -q -Q"
+    _get_comp_words_by_ref cur prev
+    opts="$(_parse_help ${COMP_WORDS[0]})"
 
-    if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
-        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
-        return 0
-    fi
-
-    case "${prev}" in
-        -H|-e|-n|-d|-l|-o)
-            COMPREPLY=()
+    case $prev in
+        -h|--help|--version)
+            return 0
             ;;
-        *)
-            COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        -H|-e|-n|-d|-l)
+            return 0
+            ;;
+        -o)
+            _filedir
+            return 0
             ;;
     esac
+
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    return 0
 }
 complete -F _metagen metagen
-}
 
 have rc-service && {
 _rc_service() {
