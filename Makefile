@@ -19,9 +19,9 @@ install:
 
 tag:
 	git pull
-	git tag $(distpkg)
+	git tag -a $(distpkg) -m "tag $(distpkg)"
 	@echo
-	@echo "tag created remember to push it"
+	@echo "created tag $(distpkg) - remember to push it"
 	@echo
 
 dist: tag
