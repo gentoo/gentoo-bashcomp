@@ -1241,7 +1241,6 @@ _equery()
                 fi
             ;;
         esac
-        dupa=${COMP_WORDS[@]}
         fi
         ;;
     b?(elongs))
