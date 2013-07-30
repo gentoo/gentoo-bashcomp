@@ -9,7 +9,6 @@
 # Originally written by: Peter "Link" Sterk <link@penguindevelopment.org>
 
 
-have layman &&
 _layman() {
     local cur prev opts r_overlays l_overlays splitopt
 
@@ -65,7 +64,7 @@ _layman() {
     $splitopt && return 0
 
     COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-}
+} &&
 complete -F _layman layman
 
 # vim: ft=sh:et:ts=4:sw=4:tw=80

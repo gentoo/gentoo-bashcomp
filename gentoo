@@ -5,15 +5,6 @@
 # Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License, v2 or later
 
-# also defined in bash_completion proper however, will produce command
-# not found warnings when this is only enabled "locally" so we define it
-# here as well.
-have()
-{
-    unset -v have
-    PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin type $1 >&/dev/null && have="yes"
-}
-
 #
 # Retrieve PORTDIR/PORTDIR_OVERLAY location from user's make.conf or, if it
 # is not defined there, from make.globals.
@@ -169,7 +160,7 @@ _pkgname()
 #
 # This is an helper function for completion of  "-o <list>" / "--option=<list>"
 # kind of command lines options.
-# 
+#
 # Usage: _list_compgen <current> <sep> <item1>[<sep><item2> ...]
 # - <current>: what we have so far on the command line
 # - <sep>: the separator character used in lists
@@ -177,12 +168,12 @@ _pkgname()
 # Returns: the function outputs each possible completion (one per line),
 # and returns 0. Typical usage is COMPREPLY=($(_list_compgen ...)).
 #
-# Note: items must not contain the <sep> character (no backslash escaping has 
+# Note: items must not contain the <sep> character (no backslash escaping has
 # been implemented).
 #
 _list_compgen()
 {
-    # Read the three parameters. 
+    # Read the three parameters.
     local current="${1}" ; shift
     local sep="${1}" ; shift
     local items="${*}"
@@ -193,7 +184,7 @@ _list_compgen()
     # Setting it to 0 means "never list anything" (only suggest <sep>).
     # Setting it to a positive value N means "list up to N possible items, and
     # only suggest <sep> if there are more".
-    # It is probably not worth a parameter, thus it will defaults to my 
+    # It is probably not worth a parameter, thus it will defaults to my
     # prefered setting (1) if not already defined in the environment.
     local max_others_number=${max_others_number:-1}
 
@@ -309,7 +300,6 @@ _list_compgen()
 #
 # emerge completion command
 #
-have emerge && {
 _emerge()
 {
     local c cur prev curword numwords opts cond prepend
@@ -480,7 +470,7 @@ _emerge()
         [[ -z "${COMPREPLY}" ]] && _pkgname_only ${cur} @GENTOO_PORTAGE_EPREFIX@/var/db/pkg
         return 0
     fi
-    
+
     # Check for conditional.
     cond="${cur%%[A-Za-z0-9]*}"
     cur="${cur:${#cond}}"
@@ -490,7 +480,7 @@ _emerge()
     else
         c="${cond}"
     fi
-    
+
     # Handle cases where a conditional is specified.
     if [[ -n "${cond}" ]]; then
     if [[ -n "${cur}" ]]; then
@@ -523,7 +513,7 @@ _emerge()
 
                 words=$(echo -ne ${w} | sort | uniq)
                 COMPREPLY=( ${words} )
-        
+
                 # Complete on the specific versions (if appropriate).
                 # TODO - see if we can use _pkgname
                 if [[ ${#COMPREPLY[@]} -le 1 ]]; then
@@ -583,7 +573,7 @@ _emerge()
                 done)"
         COMPREPLY=($(compgen -W "${words}" -- "${cur}"))
     fi
-        
+
         # If all else fails, try to complete on package names without the
     # category being specified.
     if [[ -z "${COMPREPLY}" ]]; then
@@ -706,14 +696,12 @@ _emerge()
     fi
 
     return 0
-}
+} &&
 complete -o filenames -F _emerge emerge
-}
 
 #
 # ebuild completion command
 #
-have ebuild && {
 _ebuild()
 {
     local cur opts
@@ -736,39 +724,12 @@ _ebuild()
     COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
     fi
     return 0
-}
+} &&
 complete -o filenames -F _ebuild ebuild
-}
-
-#
-# Gentoo init.d completion
-#
-
-_gentoo_style_init()
-{
-    local script="${COMP_WORDS[0]}"
-    local cur="${COMP_WORDS[$COMP_CWORD]}"
-
-    if [[ ( -f "${script}" || -h "${script}" ) && -r "${script}" ]] \
-    && [[ "${script}" != *.sh ]] \
-    && [[ "$(head -n 1 "${script}")" = "#!/sbin/runscript" ]]
-    then
-    [[ $COMP_CWORD -gt 1 ]] && return 1
-    COMPREPLY=($(opts="start stop status restart pause zap ineed needsme iuse usesme broken"; \
-            eval "$(grep '^opts=' "${script}")"; echo "${opts}"))
-    [[ -n "$COMPREPLY" ]] || COMPREPLY=(start stop restart zap)
-    COMPREPLY=($(compgen -W "${COMPREPLY[*]}" -- "${cur}"))
-    else
-    COMPREPLY=($(compgen -o default -- "${cur}"))
-    fi
-    return 0
-}
-complete -F _gentoo_style_init @GENTOO_PORTAGE_EPREFIX@/etc/init.d/*
 
 #
 # rc completion command
 #
-have rc && {
 _rc()
 {
     local cur
@@ -778,14 +739,12 @@ _rc()
     COMPREPLY=($(compgen -W "$(for i in @GENTOO_PORTAGE_EPREFIX@/etc/runlevels/*; do echo ${i##*/}; done)" -- $cur))
     fi
     return 0
-}
+} &&
 complete -F _rc rc
-}
 
 #
 # rc-status completion command
 #
-have rc-status && {
 _rcstatus()
 {
     local cur
@@ -802,14 +761,12 @@ _rcstatus()
     unset COMPREPLY
     fi
     return 0
-}
+} &&
 complete -F _rcstatus rc-status
-}
 
 #
 # rc-update completion command
 #
-have rc-update && {
 _rcupdate()
 {
     local cur show
@@ -838,14 +795,12 @@ _rcupdate()
     fi
     fi
     return 0
-}
+} &&
 complete -F _rcupdate rc-update
-}
 
 #
 # gcc-config completion command
 #
-have gcc-config && {
 _gcc_config() {
     local cur prev opts
     COMPREPLY=()
@@ -879,14 +834,12 @@ _gcc_config() {
                 $(gcc-config -l | sed -r -e 's/(\[([^]]*)\]) //g')" -- ${cur}) )
             ;;
     esac
-}
+} &&
 complete -F _gcc_config gcc-config
-}
 
 #
 # distcc-config completion command
 #
-have distcc-config && {
 _distccconfig()
 {
     local cur curword numwords opts
@@ -916,14 +869,12 @@ _distccconfig()
     fi
     COMPREPLY=($(compgen -W "${opts}" | grep ^$cur))
     return 0
-}
+} &&
 complete -F _distccconfig distcc-config
-}
 
 #
 # java-config completion command
 #
-have java-config && {
 _javaconfig()
 {
     local cur prev curword numwords opts args arg spec flag sedcmd grepcmd
@@ -1070,14 +1021,12 @@ _javaconfig()
     fi
     COMPREPLY=($(compgen $nospace -W "${opts}" -- ${cur}))
     return 0
-}
+} &&
 complete $nospace -F _javaconfig java-config
-}
 
 #
 # browser-config completion command
 #
-have browser-config && {
 _browserconfig()
 {
     local cur prev
@@ -1097,9 +1046,8 @@ _browserconfig()
     unset COMPREPLY
     fi
     return 0
-}
+} &&
 complete -F _browserconfig browser-config
-}
 
 #
 # Helper routine for the subcommand 'meta' of 'equery'
@@ -1122,7 +1070,6 @@ _equery_meta()
 #
 # Bash completion for the Gentoo 'equery' command
 #
-have equery && {
 _equery()
 {
     local cur prev mode portdir i j
@@ -1157,7 +1104,7 @@ _equery()
         esac
         ;;
     c?(hanges))
-        # Complete package name only if it is not yet supplied. 
+        # Complete package name only if it is not yet supplied.
         if [[ ${prev} == ${mode} ]]; then
             case $cur in
                 -*)
@@ -1186,7 +1133,7 @@ _equery()
                 return 0
             fi
         case $cur in
-            --f*) 
+            --f*)
             # don't handle --filter= with others to avoid space after the "="
             COMPREPLY=($(compgen -P "--filter=" \
                 -W "dir obj sym dev fifo path conf cmd doc man info"))
@@ -1317,7 +1264,7 @@ _equery()
             *)
             case $prev in
                 -a|--all-packages)
-                # Complete on all package names.                            
+                # Complete on all package names.
                 _pkgname -A $cur
                 ;;
                 *)
@@ -1389,15 +1336,13 @@ _equery()
             ;;
     esac
     return 0
-}
+} &&
 complete -F _equery equery
-}
 
 #
 # epkginfo completion
 #
 
-have epkginfo && {
 _epkginfo()
 {
     local cur prev
@@ -1411,15 +1356,13 @@ _epkginfo()
     fi
 
     return 0
-}
+} &&
 complete -F _epkginfo epkginfo
-}
 
 #
 # ekeyword completion
 #
 
-have ekeyword && {
 _ekeyword()
 {
     local cur portdir archl_s archl_u archl_r archl_m arch
@@ -1451,15 +1394,13 @@ _ekeyword()
             _filedir 'ebuild'
             ;;
         esac
-}
+} &&
 complete -o filenames -F _ekeyword ekeyword
-}
 
 #
 # portageq completion
 #
 
-have portageq && {
 _portageq() {
     local cur prev opts
     COMPREPLY=()
@@ -1482,7 +1423,7 @@ _portageq() {
       pkgdir \
       portdir_overlay \
       distdir"
-    
+
     if [[ $COMP_CWORD -eq 1 ]] ; then
     # would always be correct, but it's pretty slow...
     #COMPREPLY=($(compgen -W "$(portageq | grep '^   [[:lower:]]' | \
@@ -1495,22 +1436,22 @@ _portageq() {
     config*|vdb_path|gentoo_mirrors|*dir*)
         COMPREPLY=()
         ;;
-        
+
     # this also isn't the fastest, but I welcome an alternative method
     envvar)
         COMPREPLY=($(compgen -W "$(env -i emerge -v --info | \
                 sed -n -e '/^[[:upper:]].*=".*"/s/^\(.*\)=".*$/\1/p')" -- ${cur}))
         ;;
-        
+
     *v@(isible|ersion)|match)
         COMPREPLY=($(compgen $nospace -W '/' -- $cur))
         ;;
-    
+
     # $prev is a path, so complete on category/package
     */*)
             local x a=0
             for x in ${COMP_WORDS[@]} ; do
-                # This is the only one 
+                # This is the only one
                 if [[ "${x}" == "all_best_visible" ]] ; then
                     a=1
                     break
@@ -1530,18 +1471,15 @@ _portageq() {
                     _pkgname -A $cur
 #                fi
             fi
-        ;;      
-    esac    
-}
-
+        ;;
+    esac
+} &&
 complete -F _portageq portageq
-}
 
 #
 # webapp-config completion
 #
 
-have webapp-config && {
 _webapp_complete_appver()
 {
     local x proot ibase cur="$2"
@@ -1561,7 +1499,7 @@ _webapp_complete_appver()
             fi ; \
         done)" -- ${cur}))
         ;;
-        
+
     # complete on uninstalled
     uninstalled)
         COMPREPLY=($(compgen -W "$(\
@@ -1572,7 +1510,7 @@ _webapp_complete_appver()
             fi ; \
         done)" -- ${cur}))
         ;;
-        
+
     # all
     all)
         COMPREPLY=($(compgen -W "$(\
@@ -1580,7 +1518,7 @@ _webapp_complete_appver()
             [[ -d "${x}" ]] && echo "${x##*/}" ; \
         done)" -- ${cur}))
         ;;
-        
+
     # complete on version
     *)
         [[ -d "${proot}/$1" ]] || return 1
@@ -1618,7 +1556,7 @@ _webapp_config()
         COMPREPLY=($(compgen -W "${opts} ${actions}" -- ${cur}))
         return 0
     fi
-    
+
     case "${prev}" in
         --bug-report|-p|--pretend)
         COMPREPLY=($(compgen -W "${opts} ${actions}" -- ${cur}))
@@ -1640,11 +1578,11 @@ _webapp_config()
         --list-unused-installs)
             _webapp_complete_appver uninstalled ${cur}
             ;;
-        
+
         --list-installs|--show-postinst)
             _webapp_complete_appver all ${cur}
             ;;
-    
+
         #  hrm... anyone know a better way to reliably do this?
         -h|--host)
             local x
@@ -1653,12 +1591,12 @@ _webapp_config()
                     [[ -d "${x}" ]] && echo "${x##*/}" ; \
                 done)" -- ${cur}))
             ;;
-        
+
         --virtual*)
             COMPREPLY=($(compgen -W "server-owned config-owned virtual" \
             -- ${cur}))
             ;;
-        
+
         -d|--dir)
         local host x i=0
                 # see if --host has been specified, and if so, get the value
@@ -1676,7 +1614,7 @@ _webapp_config()
             eval $(. @GENTOO_PORTAGE_EPREFIX@/etc/vhosts/webapp-config ; \
             echo host="${VHOST_HOSTNAME:-localhost}")
         fi
-        
+
             COMPREPLY=($(compgen -W "$(\
             for x in ${hostroot}${host}/* ; do \
             [[ -d "${x}" ]] && echo "${x}" ; \
@@ -1698,11 +1636,9 @@ _webapp_config()
                     _webapp_complete_appver all ${cur}
             ;;
     esac
-}
+} &&
 complete -F _webapp_config webapp-config
-}
 
-have revdep-rebuild && {
 _revdep_rebuild() {
     local cur prev numwords opts
     local words i x
@@ -1715,7 +1651,7 @@ _revdep_rebuild() {
     if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
             COMPREPLY=($(compgen -f -- ${cur}))
             return 0
-        fi  
+        fi
 
     # find action
     for ((i = 0; i < ${numwords}; i++ )); do
@@ -1740,7 +1676,7 @@ _revdep_rebuild() {
             COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         fi
         return 0
-    fi  
+    fi
     if [[ ${action} == '--library' ]] || [[ ${action} == '-L' ]] ; then
         if [[ "${cur}" == */* ]]; then
             COMPREPLY=( $(builtin cd @GENTOO_PORTAGE_EPREFIX@/lib; compgen -f -- "${cur}") )
@@ -1749,11 +1685,9 @@ _revdep_rebuild() {
         fi
     fi
     return 0
-}
+} &&
 complete -F _revdep_rebuild revdep-rebuild
-}
 
-have splat && {
 _splat() {
     local cur prev opts
     COMPREPLY=()
@@ -1776,11 +1710,9 @@ _splat() {
             COMPREPLY=($(compgen -W "${COMPREPLY[@]} ${opts}" -- ${cur}))
             ;;
     esac
-}
+} &&
 complete -o filenames -F _splat splat
-}
 
-have euse && {
 _euse() {
     local cur prev opts sopts use portdir
     COMPREPLY=()
@@ -1830,11 +1762,9 @@ _euse() {
                 COMPREPLY=($(compgen -W "${use}" -- ${cur}))
             fi
     esac
-}
+} &&
 complete -F _euse euse
-}
 
-have glsa-check && {
 _glsa_check() {
     local cur opts
     COMPREPLY=()
@@ -1859,11 +1789,9 @@ _glsa_check() {
     fi
 
     COMPREPLY=($(compgen -W "${opts} $(< ${ROOT}/tmp/gc.out)" -- ${cur}))
-}
+} &&
 complete -F _glsa_check glsa-check
-}
 
-have epm && {
 _epm() {
     local cur prev opts
     COMPREPLY=()
@@ -1901,11 +1829,9 @@ _epm() {
             fi
             ;;
     esac
-}
+} &&
 complete -o filenames -F _epm epm
-}
 
-have metagen &&
 _metagen() {
     local cur prev opts
     COMPREPLY=()
@@ -1927,10 +1853,9 @@ _metagen() {
 
     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
     return 0
-}
+} &&
 complete -F _metagen metagen
 
-have rc-service && {
 _rc_service() {
     local cur prev numwords opts
     local words i x filename
@@ -1943,7 +1868,7 @@ _rc_service() {
     if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
             COMPREPLY=($(compgen -f -- ${cur}))
             return 0
-        fi  
+        fi
 
     # find action
     for x in ${COMP_LINE} ; do
@@ -1961,7 +1886,7 @@ _rc_service() {
                 break
             fi
         done
-    
+
         for ((i = 1; i < ${numwords}; i++ )); do
             if [[ ! ${COMP_WORDS[$i]} == -* ]]; then
                 break
@@ -1972,7 +1897,7 @@ _rc_service() {
     if [[ ${COMP_CWORD} -eq 3 ]]; then
         return 1
     fi
-    
+
     # check if an option was typed
     if [[ ${cur} == -* ]]; then
         if [[ ${cur} == --* ]]; then
@@ -1985,7 +1910,7 @@ _rc_service() {
             return 0
         fi
 
-        
+
         # NOTE: This slows things down!
         # (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
         # This removes any options from the list of completions that have
@@ -2029,9 +1954,9 @@ _rc_service() {
         done))
         return 0
     fi
-    
-return 0
-}
+
+    return 0
+} &&
 complete -F _rc_service rc-service
-}
+
 # vim: ft=sh:et:ts=4:sw=4:tw=80
