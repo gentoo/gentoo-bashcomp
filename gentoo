@@ -2,25 +2,104 @@
 #
 # $Id$
 #
-# Copyright 1999-2009 Gentoo Foundation
+# Copyright 1999-2013 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License, v2 or later
 
+# Retrieve PORTDIR/PORTDIR_OVERLAY location.
 #
-# Retrieve PORTDIR/PORTDIR_OVERLAY location from user's make.conf or, if it
-# is not defined there, from make.globals.
+# In order of highest to lowest priority:
+# /etc/portage/repos.conf{,/*}
+# /usr/share/portage/config/repos.conf
+# /etc/portage/make.conf
+# /etc/make.conf
+# /usr/share/portage/config/make.globals
 #
-_portdir()
-{
-    (
-    source @GENTOO_PORTAGE_EPREFIX@/usr/share/portage/config/make.globals 2>/dev/null
-    source @GENTOO_PORTAGE_EPREFIX@/etc/make.conf 2>/dev/null
-    source @GENTOO_PORTAGE_EPREFIX@/etc/portage/make.conf 2>/dev/null
+# The first two files are in repos.conf format and must be parsed for the
+# variable "location".  The rest are make.conf style and are simply sourced
+# for PORTDIR and PORTDIR_OVERLAY.  While repos.conf overrides any value of
+# PORTDIR set in make.conf, PORTDIR_OVERLAY is incremental (combined across
+# available sources).
+# 
+# This would be a hell of a lot simpler if we used portageq, but also about
+# 500 times slower.
+_portdir() {
+	if [[ -e @GENTOO_PORTAGE_EPREFIX@/usr/share/portage/config/repos.conf ]]; then
+		if [[ ${1} == '-o' ]]; then
+			for overlayname in $(_parsereposconf -l); do
+				overlaypath+=($(_parsereposconf ${overlayname} location))
+			done
 
-    echo ${PORTDIR}
-    if [[ $1 == '-o' ]] ; then
-        echo ${PORTDIR_OVERLAY}
-    fi
-    )
+			source @GENTOO_PORTAGE_EPREFIX@/etc/make.conf 2>/dev/null
+			source @GENTOO_PORTAGE_EPREFIX@/etc/portage/make.conf 2>/dev/null
+		
+			overlaypath+=(${PORTDIR_OVERLAY})
+
+			# strip out duplicates
+			overlaypath=($(printf "%s\n" "${overlaypath[@]}" | sort -u))
+
+			echo "${overlaypath[@]}"
+		else
+			mainreponame=$(_parsereposconf DEFAULT main-repo)
+			mainrepopath=$(_parsereposconf ${mainreponame} location)
+
+			echo "${mainrepopath}"
+		fi
+	else
+	    source @GENTOO_PORTAGE_EPREFIX@/usr/share/portage/config/make.globals 2>/dev/null
+	    source @GENTOO_PORTAGE_EPREFIX@/etc/make.conf 2>/dev/null
+	    source @GENTOO_PORTAGE_EPREFIX@/etc/portage/make.conf 2>/dev/null
+
+	    echo "${PORTDIR}"
+
+	    if [[ ${1} == '-o' ]]; then 
+	        echo "${PORTDIR_OVERLAY}"
+	    fi   
+	fi
+}
+
+# _parsereposconf [-l] <repo> <variable>
+#   -l lists available repos
+_parsereposconf() {
+	local f insection line section v value var
+
+	for f in @GENTOO_PORTAGE_EPREFIX@/usr/share/portage/config/repos.conf \
+		@GENTOO_PORTAGE_EPREFIX@/etc/portage/repos.conf \
+		@GENTOO_PORTAGE_EPREFIX@/etc/portage/repos.conf/*.conf; do
+
+		if [[ -f ${f} ]]; then
+			insection=0
+			
+			while read line; do
+				# skip comments and blank lines
+				[[ -z ${line} || ${line:0:1} == "#" ]] && continue
+
+				if [[ ${insection} == 1 && ${line} =~ ^\[.*\]$ ]]; then
+					# End of the section we were interested in so stop
+					secname+=(${line//[(\[|\])]/}) # record name for -l
+					break
+				elif [[ ${line} =~ ^\[.*\]$ ]]; then
+					# Entering a new section, check if it's the one we want
+					section=${line//[(\[|\])]/}
+					[[ ${section} == ${1} ]] && insection=1
+					secname+=(${section}) # record name for -l
+				elif [[ ${insection} == 1 ]]; then
+					# We're in the section we want, grab the values
+					var=${line%%=*}
+					var=${var// /}
+					value=${line##*=}
+					value=${value## }
+					[[ ${var} == ${2} ]] && v="${value}"
+				fi
+				continue
+			done < "${f}"
+		fi
+	done
+
+	if [[ ${1} == -l ]]; then
+		echo "${secname[@]}"
+	else
+		echo "${v}"
+	fi
 }
 
 # like _pkgname but completes on package names only (no category)
