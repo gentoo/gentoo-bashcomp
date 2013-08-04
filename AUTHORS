@@ -35,6 +35,9 @@ Peter "Link" Sterk <link@penguindevelopment.org>
  - original layman completion (licensed under public-domain)
  - http://www.penguindevelopment.org/
 
+Alexander Tsoy <alexander@tsoy.me>
+ - bash-completion-2 porting and ebuild updates
+
 Note
 ====
 Modifications were made in a version of this script found in
