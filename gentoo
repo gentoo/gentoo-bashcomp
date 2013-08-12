@@ -1,7 +1,5 @@
 # Gentoo Linux Bash Shell Command Completion
 #
-# $Id$
-#
 # Copyright 1999-2013 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License, v2 or later
 
@@ -23,8 +21,10 @@
 # This would be a hell of a lot simpler if we used portageq, but also about
 # 500 times slower.
 _portdir() {
+    local mainreponame mainrepopath overlayname overlaypath
+
     if [[ -e @GENTOO_PORTAGE_EPREFIX@/usr/share/portage/config/repos.conf ]]; then
-        if [[ ${1} == '-o' ]]; then
+        if [[ ${1} == -o ]]; then
             for overlayname in $(_parsereposconf -l); do
                 overlaypath+=($(_parsereposconf ${overlayname} location))
             done
@@ -51,7 +51,7 @@ _portdir() {
 
         echo "${PORTDIR}"
 
-        if [[ ${1} == '-o' ]]; then 
+        if [[ ${1} == -o ]]; then 
             echo "${PORTDIR_OVERLAY}"
         fi   
     fi
@@ -66,33 +66,32 @@ _parsereposconf() {
         @GENTOO_PORTAGE_EPREFIX@/etc/portage/repos.conf \
         @GENTOO_PORTAGE_EPREFIX@/etc/portage/repos.conf/*.conf; do
 
-        if [[ -f ${f} ]]; then
-            insection=0
+        [[ -f ${f} ]] || continue
+        insection=0
             
-            while read line; do
-                # skip comments and blank lines
-                [[ -z ${line} || ${line:0:1} == "#" ]] && continue
+        while read -r line; do
+            # skip comments and blank lines
+            [[ -z ${line} || ${line} == '#'* ]] && continue
 
-                if [[ ${insection} == 1 && ${line} =~ ^\[.*\]$ ]]; then
-                    # End of the section we were interested in so stop
-                    secname+=(${line//[(\[|\])]/}) # record name for -l
-                    break
-                elif [[ ${line} =~ ^\[.*\]$ ]]; then
-                    # Entering a new section, check if it's the one we want
-                    section=${line//[(\[|\])]/}
-                    [[ ${section} == ${1} ]] && insection=1
-                    secname+=(${section}) # record name for -l
-                elif [[ ${insection} == 1 ]]; then
-                    # We're in the section we want, grab the values
-                    var=${line%%=*}
-                    var=${var// /}
-                    value=${line##*=}
-                    value=${value## }
-                    [[ ${var} == ${2} ]] && v="${value}"
-                fi
-                continue
-            done < "${f}"
-        fi
+            if [[ ${insection} == 1 && ${line} == '['*']' ]]; then
+                # End of the section we were interested in so stop
+                secname+=(${line//[(\[|\])]/}) # record name for -l
+                break
+            elif [[ ${line} == '['*']' ]]; then
+                # Entering a new section, check if it's the one we want
+                section=${line//[(\[|\])]/}
+                [[ ${section} == "${1}" ]] && insection=1
+                secname+=(${section}) # record name for -l
+            elif [[ ${insection} == 1 ]]; then
+                # We're in the section we want, grab the values
+                var=${line%%=*}
+                var=${var// /}
+                value=${line#*=}
+                value=${value# }
+                [[ ${var} == ${2} ]] && v=${value}
+            fi
+            continue
+        done < "${f}"
     done
 
     if [[ ${1} == -l ]]; then
