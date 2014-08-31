@@ -5,17 +5,8 @@ distapp = gentoo-bashcomp
 distver := $(shell date -u +%Y%m%d)
 distpkg := $(distapp)-$(distver)
 
-PREFIX = /usr
-
 all:
 	@echo Nothing to compile.
-
-install:
-	install -d "$(DESTDIR)$(PREFIX)/share/bash-completion"
-	install -m0644 gentoo "$(DESTDIR)$(PREFIX)/share/bash-completion"
-	install -d "$(DESTDIR)/etc/bash_completion.d"
-	ln -snf "../..$(PREFIX)/share/bash-completion/gentoo" \
-		"$(DESTDIR)/etc/bash_completion.d/gentoo"
 
 tag:
 	git pull
