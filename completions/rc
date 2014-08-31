@@ -1,0 +1,21 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# rc completion command
+#
+_rc()
+{
+    local cur
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    if [[ ${#COMP_WORDS[*]} -le 2 ]]; then
+    COMPREPLY=($(compgen -W "$(for i in @GENTOO_PORTAGE_EPREFIX@/etc/runlevels/*; do echo ${i##*/}; done)" -- $cur))
+    fi
+    return 0
+} &&
+complete -F _rc rc
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

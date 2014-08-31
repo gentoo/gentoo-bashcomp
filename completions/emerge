@@ -1,0 +1,410 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+source "@helpersdir@/gentoo-common.sh"
+
+#
+# emerge completion command
+#
+_emerge()
+{
+    local c cur prev curword numwords opts cond prepend
+    local words stophere i x
+    local action actionpos sysactions pkgpos
+    local portdir=$(_portdir -o)
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    numwords=${#COMP_WORDS[*]}
+    curword=${COMP_CWORD}
+    opts=''
+
+    if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
+        COMPREPLY=($(compgen -f -- ${cur}))
+        return 0
+    fi
+
+    # find action
+    for x in ${COMP_LINE} ; do
+        if [[ ${x} =~ ^(system|world)$ ]] || [[ ${x} =~ -[CPcs] ]] || \
+            [[ ${x} =~ --(clean|config|depclean|info|metadata|prune|regen|resume|search|sync|unmerge) ]]
+        then
+            action=${x}
+            break
+        fi
+    done
+
+    if [[ -n ${action} ]]; then
+        for ((i = 0; i < ${numwords}; i++ )); do
+            if [[ ${COMP_WORDS[${i}]} == "${action}" ]]; then
+                actionpos=${i}
+                pkgpos=$((actionpos + 1))
+                break
+            fi
+        done
+
+        if [[ ${action} == -* && ${action} != --* ]] ; then
+            case "${action}" in
+            -*C*) action='--unmerge' ;;
+            -*P*) action='--prune' ;;
+            -*c*) action='--clean' ;;
+            -*s*) action='--search' ;;
+            esac
+        fi
+    else
+        for ((i = 1; i < ${numwords}; i++ )); do
+            if [[ ! ${COMP_WORDS[$i]} == -* ]]; then
+                pkgpos=${i}
+                break
+            fi
+        done
+        [[ -z ${pkgpos} ]] && pkgpos=${numwords}
+    fi
+
+    # Handle special cases.
+    if [[ ${action} == "--search" ]] || [[ ${COMP_LINE} == *" "-@(S|-searchdesc)* ]] || \
+        [[ ${COMP_LINE} == *" "-@(V|-version)* ]] || [[ ${action} == "--metadata" ]]
+    then
+        unset COMPREPLY
+        return 0
+    elif [[ ${COMP_LINE} == *" "-@(h|-help)* ]] ; then
+        unset COMPREPLY
+        [[ ${curword} -eq 2 ]] && COMPREPLY=($(compgen -W 'system world --sync' -- ${cur}))
+        return 0
+    fi
+
+    # Complete on options.
+    if [[ ${cur} == -* ]]; then
+        # If a resume option was specified, it needs special handling.
+        if [[ ${COMP_LINE} =~ --(resume|skipfirst) ]] ; then
+            if [[ ${cur} == --* ]]; then
+                opts="--ask --pretend --resume --skipfirst"
+            elif [[ ${cur} == -* ]]; then
+                [[ ${COMP_LINE} =~ --(ask|pretend) ]] && opts="-a -p"
+            fi
+        elif [[ ${cur} == --* ]]; then
+            # Complete on long options.
+            opts="--alphabetical --ask \
+                --buildpkg --buildpkgonly \
+                --changelog --clean --color=y --color=n --columns --complete-graph --config \
+                --debug --deep --depclean \
+                --emptytree \
+                --fetch-all-uri --fetchonly \
+                --getbinpkg --getbinpkgonly \
+                --ignore-default-opts --info \
+                --jobs= \
+                --keep-going \
+                --metadata \
+                --newuse --noconfmem --nodeps --noreplace --nospinner \
+                --oneshot --onlydeps \
+                --pretend --prune \
+                --quiet \
+                --reinstall=changed-use --regen \
+                --search \
+                --sync \
+                --tree \
+                --unmerge --update --upgradeonly --usepkg --usepkgonly \
+                --verbose \
+                --with-bdeps=y --with-bdeps=n"
+            if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
+                opts="${opts} --help --resume --searchdesc --version"
+            fi
+        elif [[ ${cur} == -* ]]; then
+            # Complete on short options.
+            opts="-B -D -G -K -N -O -a -b -d -e -f -g -k -l -n -o -p -q -t -u -v"
+            if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
+                opts="${opts} -h -S -V"
+            fi
+            if [[ -z ${action} ]] && [[ ${curword} -eq $((pkgpos - 1)) ]] ; then
+                opts="${opts} -C -P -c -s"
+            fi
+        fi
+
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+
+        # NOTE: This slows things down!
+        # (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
+        # This removes any options from the list of completions that have
+        # already been specified on the command line.
+        COMPREPLY=($(echo "${COMP_WORDS[@]}" | \
+            (while read -d ' ' i; do
+                [[ -z ${i} ]] && continue
+                # flatten array with spaces on either side,
+                # otherwise we cannot grep on word boundaries of
+                # first and last word
+                COMPREPLY=" ${COMPREPLY[@]} "
+                # remove word from list of completions
+                COMPREPLY=(${COMPREPLY/ ${i%% *} / })
+            done
+            echo ${COMPREPLY[@]})))
+
+        return 0
+    fi # options
+
+    # Stop completion if a special case is encountered.
+    if [[ ${action} =~ (system|world) ]] || \
+        [[ ${COMP_LINE} =~ --(depclean|metadata|regen|resume|skipfirst|sync) ]]
+    then
+        unset COMPREPLY
+        return 0
+    fi
+
+    # Complete on installed packages when unmerging.
+    if [[ "${action}" == '--unmerge' ]]; then
+    if [[ -n "${cur}" ]] ; then
+        if [[ "${cur}" == */* ]]; then
+        words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg; compgen -G "${cur}*")
+        else
+        words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg; compgen -S '/' -G "${cur}*")
+
+                local n=0
+                for i in ${words} ; do
+                    [[ ${i} == ${cur}* ]] && n=$((n+1))
+                done
+
+                if [[ ${n} -eq 1 ]] ; then
+                    words="$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg ; compgen -G "*-*/*")"
+                fi
+        fi
+            COMPREPLY=($(for i in ${words} ; do \
+                            [[ ${i} == ${cur}* ]] && echo ${i} ; \
+                        done))
+    else
+        COMPREPLY=($(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg ; compgen -S '/' -G "*-*"))
+    fi
+
+        [[ -z "${COMPREPLY}" ]] && _pkgname_only ${cur} @GENTOO_PORTAGE_EPREFIX@/var/db/pkg
+        return 0
+    fi
+
+    # Check for conditional.
+    cond="${cur%%[A-Za-z0-9]*}"
+    cur="${cur:${#cond}}"
+    if [[ ${cond:0:1} == "'" || ${cond:0:1} == '"' ]] ; then
+        prepend="-P ${cond:1}"
+        c="${cond:1}"
+    else
+        c="${cond}"
+    fi
+
+    # Handle cases where a conditional is specified.
+    if [[ -n "${cond}" ]]; then
+    if [[ -n "${cur}" ]]; then
+            if [[ ${cur} == */* ]]; then
+                if [[ ${cur} == *-[0-9]* ]] ; then
+                    words="$(\
+                        for pd in ${portdir} ; do \
+                            builtin cd ${pd} ; \
+                            local cat="${cur%/*}" ; \
+                            local pkg="$(echo ${cur%-[0-9]*})" ; \
+                            pkg="${pkg##*/}" ; \
+                            for x in ${cat}/${pkg}/*.ebuild ; do \
+                                [[ -f ${x} ]] || continue ; \
+                                x="${x/${pkg}\/}" ; \
+                                echo "${x%*.ebuild}" ; \
+                            done ; \
+                        done)"
+                else
+            words="$(\
+                    for pd in ${portdir} ; do \
+                        builtin cd ${pd}; \
+                        compgen -X "*metadata.xml" -G "${cur}*" -- ${cur} ; \
+                    done)"
+                fi
+
+                local w
+                for x in $words ; do
+                    w="${x}\n${w}"
+                done
+
+                words=$(echo -ne ${w} | sort | uniq)
+                COMPREPLY=( ${words} )
+
+                # Complete on the specific versions (if appropriate).
+                # TODO - see if we can use _pkgname
+                if [[ ${#COMPREPLY[@]} -le 1 ]]; then
+                    COMPREPLY=($(
+                        for pd in ${portdir}; do
+                            if [[ -d ${pd}/metadata/md5-cache ]]; then
+                                builtin cd ${pd}/metadata/md5-cache
+                                compgen ${prepend} -G "${cur}*" -- "${cur}"
+                            elif [[ -d ${pd}/metadata/cache ]]; then
+                                builtin cd ${pd}/metadata/cache
+                                compgen ${prepend} -G "${cur}*" -- "${cur}"
+                            else
+                                builtin cd ${pd}
+                                local cat="${cur%/*}"
+                                local pkg="$(echo ${cur%-[0-9]*}*)"
+                                pkg="${pkg##*/}"
+                                for x in ${cat}/${pkg}/*.ebuild; do
+                                    [[ -f "${x}" ]] || continue
+                                    x="${x/${pkg}\/}"
+                                    if [[ ${cond:0:1} == "'" ]] || [[ ${cond:0:1} == '"' ]]; then
+                                        echo "${c}${x%*.ebuild}"
+                                    else
+                                        echo "${x%*.ebuild}"
+                                    fi
+                                done
+                            fi
+                        done
+                    ))
+                else
+                    COMPREPLY=($(compgen ${prepend} -W "${words}" -- $cur))
+                fi
+            else
+                words="$(\
+                    for pd in ${portdir} ; do \
+                        builtin cd ${pd} ; \
+                        compgen ${prepend} -S '/' -G "${cur}*" -- "${cur}" ; \
+                    done)"
+
+                local w
+                for x in words ; do
+                    w="${x}\n${w}"
+                done
+
+                COMPREPLY=($(echo -e ${w} | uniq))
+                [[ ${#COMPREPLY[@]} = 1 ]] && \
+                    COMPREPLY=($(\
+                        for pd in ${portdir} ; do \
+                            builtin cd ${pd} ; \
+                            compgen ${prepend} -G "${cur}*/*" -- "${cur}" ; \
+                        done))
+            fi
+        else
+        words="$(\
+                for pd in ${portdir} ; do \
+                    builtin cd ${pd}; \
+                    compgen -G "*-*"; \
+                done)"
+        COMPREPLY=($(compgen -W "${words}" -- "${cur}"))
+    fi
+
+        # If all else fails, try to complete on package names without the
+    # category being specified.
+    if [[ -z "${COMPREPLY}" ]]; then
+        words="$(\
+                for pd in ${portdir} ; do \
+                    builtin cd ${pd}; \
+                    for i in *-*/${cur}*; do \
+                        [[ -d $i ]] && echo ${i##*/}; \
+                    done ; \
+                done)"
+
+        COMPREPLY=($(compgen ${prepend} -W "${words}" -- ${cur}))
+
+        if [[ ${#COMPREPLY[@]} -le 1 ]]; then
+            # Now complete on the specific versions.
+            words="$(
+                for pd in ${portdir}; do
+                    if [[ -d ${pd}/metadata/md5-cache ]]; then
+                        builtin cd ${pd}/metadata/md5-cache
+                        for i in */${cur}*; do
+                            [[ -f $i ]] && echo ${i##*/}
+                        done
+                    elif [[ -d ${pd}/metadata/cache ]]; then
+                        builtin cd ${pd}/metadata/cache
+                        for i in */${cur}*; do
+                            [[ -f $i ]] && echo ${i##*/}
+                        done
+                    fi
+                done
+            )"
+            COMPREPLY=($(compgen ${prepend} -W "${words}" -- "${cur}"))
+        fi
+    fi
+    return 0
+    fi
+
+    # Complete on packages.
+    #
+    # Only allow these actions if no packages have been specified.
+    #
+    # TODO: This doesn't block these actions if no categories are
+    #       specified. Please fix me.
+    #
+    #       e.g. emerge -a gentoo-dev-sources
+    #
+    #            will still allow system and world actions to be specified,
+    #            as opposed to
+    #
+    #            emerge -a sys-kernel/gentoo-dev-sources
+    #
+    if [[ ${COMP_CWORD} -eq 1 ]] || [[ ! " ${COMP_LINE} " == *" "*[/]*" "* ]] ; then
+        sysactions=$'\n'"system"$'\n'"world"
+    else
+        sysactions=''
+    fi
+
+    if [[ -n "${cur}" ]] ; then
+        if [[ ${cur} == */* ]] ; then
+            words=$(\
+                for pd in ${portdir} ; do \
+                    builtin cd ${pd}; \
+                    compgen -X "*metadata.xml" -G "${cur}*" ; \
+                done)"${sysactions}"
+        else
+            local ww=$(\
+                for pd in ${portdir} ; do \
+                    builtin cd ${pd} ; \
+                    compgen -X "!@(*-*|virtual)" -S '/' -G "${cur}*"; \
+                done)"${sysactions}"
+            # complete on virtuals
+            ww="${ww} $(\
+                for pd in ${portdir} ; do \
+                    if [[ -d ${pd}/profiles ]] ; then
+                        find ${pd}/profiles -name virtuals -exec \
+                            sed -n -e 's|^\(virtual/[[:alnum:]]\+\).*$|\1|p' {} \; | \
+                            sort -u
+                    fi ; \
+                done)"
+
+            local w
+            for x in ${ww} ; do w="${x}\n${w}" ; done
+
+            words=$(echo -e ${w} | sort -u)
+
+            local n=0
+            for i in ${words} ; do
+                [[ ${i} == ${cur}* ]] && n=$((n+1))
+            done
+
+            if [[ ${n} -eq 1 ]] ; then
+                words=$(for pd in ${portdir} ; do \
+                            builtin cd ${pd} ; \
+                            compgen -G "*-*/*" ; \
+                        done)"${sysactions}"
+            fi
+        fi
+        COMPREPLY=($(for i in ${words} ; do \
+                        [[ ${i} == ${cur}* ]] && echo ${i} ; \
+                    done))
+    else
+        words="$(\
+            for pd in ${portdir} ; do \
+                builtin cd ${pd} ; \
+                compgen -S '/' -G "*-*" ; \
+            done)""${sysactions}"
+    COMPREPLY=($(compgen -W "${words}" -- ${cur}))
+    fi
+
+    # If all else fails, try to complete on package names without the
+    # category being specified.
+    if [[ -z "${COMPREPLY}" ]]; then
+        words="$(\
+            for pd in ${portdir} ; do \
+                builtin cd ${pd}; \
+                for i in [a-z]*-[a-z0-9]*/${cur}*; do \
+                    [[ -d $i ]] && echo ${i##*/}; \
+                done ; \
+            done)"
+    COMPREPLY=($(compgen -W "${words}" -- ${cur}))
+    fi
+
+    return 0
+} &&
+complete -o filenames -F _emerge emerge
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

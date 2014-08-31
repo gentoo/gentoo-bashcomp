@@ -1,0 +1,30 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+_metagen() {
+    local cur prev opts
+    COMPREPLY=()
+    _get_comp_words_by_ref cur prev
+    opts="$(_parse_help ${COMP_WORDS[0]})"
+
+    case $prev in
+        -h|--help|--version)
+            return 0
+            ;;
+        -H|-e|-n|-d|-l)
+            return 0
+            ;;
+        -o)
+            _filedir
+            return 0
+            ;;
+    esac
+
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    return 0
+} &&
+complete -F _metagen metagen
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

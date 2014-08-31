@@ -1,0 +1,158 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# java-config completion command
+#
+_javaconfig()
+{
+    local cur prev curword numwords opts args arg spec flag sedcmd grepcmd
+    local multiplepkgs pkgs execopts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    numwords=${#COMP_WORDS[*]}
+    curword=${COMP_CWORD}
+    opts=""
+    args=""
+    pkgs=""
+    sedcmd="sed -r -e s/\[([^]]+)\].*/\1/"
+    vmsedcmd="sed -r -e s/\[([^]]+)\]/\1/"
+    grepcmd="egrep -o (--set-(system|user)-(classpath|vm)=)"
+    multiplepkgs=""
+    execopts="HtmlConverter JavaPluginControlPanel \
+    appletviewer awt_robot \
+    extcheck \
+    idlj \
+    j2sdk-config jar jarsigner \
+    java java-rmi.cgi java_vm javac javadoc javah javap jdb \
+    keytool kinit klist ktab \
+    native2ascii \
+    oldjava oldjavac oldjdb orbd \
+    policytool \
+    realpath rmic rmid rmiregistry \
+    serialver servertool \
+        tnameserv"
+    if [[ "${cur}" == -* ]] || [ ${curword} -eq 1 ]; then
+    case "${cur}" in
+        --java)
+        opts="--java --javac --java-version"
+        ;;
+        --j@(a@(r|va@(c|-version))|@(dk|re)-home))
+        opts=""
+        ;;
+        --list-available-@(packages|vms))
+        opts=""
+        ;;
+        --@(exec|set-@(user|system)-@(classpath|vm)))
+        opts="${cur}="
+        ;;
+        --set-@(user|system)-@(classpath|vm)=)
+        if [[ "${cur}" == "--set-system-vm=" ]] || [[ "${cur}" == "--set-user-vm=" ]]; then
+            flag="--list-available-vms"
+            args=$(java-config --nocolor "${flag}" | cut --delimiter=' ' --fields=2 | ${vmsedcmd})
+        else
+            flag="--list-available-packages"
+            args=$(java-config --nocolor "${flag}" | ${sedcmd})
+        fi
+        for arg in ${args}; do
+            [[ -n "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
+        done
+        COMPREPLY=($(compgen $nospace -W "${opts}"))
+        return 0
+        ;;
+        --exec=)
+        COMPREPLY=($(compgen $nospace -W "${execopts}"))
+        return 0
+        ;;
+        *)
+            if [[ "${cur}" == "--set-system-vm="* ]] || [[ "${cur}" == "--set-user-vm="* ]]; then
+            args=$(java-config --nocolor --list-available-vms | cut --delimiter=' ' --fields=2 | ${vmsedcmd})
+            if [[ "${cur}" == "--set-system-vm="* ]]; then
+            spec=${cur##--set-system-vm=}
+            else
+            spec=${cur##--set-user-vm=}
+            fi
+            for arg in ${args}; do
+            if [[ "${arg:0:${#spec}}" == "${spec}" ]]; then
+                [[ -n "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
+            fi
+            done
+            [[ "${opts}" == "${spec}" ]] && opts=""
+            COMPREPLY=($(compgen -W "${opts}"))
+            return 0
+        elif [[ "${cur}" == "--set-system-classpath="* ]] || [[ "${cur}" == "--set-user-classpath="* ]]; then
+            args=$(java-config --nocolor --list-available-packages | ${sedcmd})
+            [[ $(echo "${cur}" | grep -c ",") -gt 0 ]] && multiplepkgs="true"
+            if [[ "${cur}" == "--set-system-classpath="* ]]; then
+            spec="${cur##--set-system-classpath=}"
+            else
+            spec="${cur##--set-user-classpath=}"
+            fi
+            if [[ -n "${multiplepkgs}" ]]; then
+            pkgs="${spec%,*}"
+            spec="${spec##*,}"
+            fi
+            if [[ -n "${multiplepkgs}" ]]; then
+                for arg in ${args}; do
+                if [[ "${spec}" ]]; then
+                    if [[ "${arg:0:${#spec}}" == "${spec}" ]] \
+                        && [[ ! $(echo "${cur}" | egrep -o "(=|,)${arg},") ]]
+                                then
+                    [[ -n "${opts}" ]] && opts="${opts} ${pkgs},${arg}" || opts="${pkgs},${arg}"
+                    fi
+                else
+                    if [[ ! $(echo "${cur}" | egrep -o "(=|,)${arg},") ]]; then
+                        [[ -n "${opts}" ]] && opts="${opts} ${pkgs},${arg}" || opts="${pkgs},${arg}"
+                    fi
+                fi
+                done
+            [[ "${opts}" == "${pkgs},${spec}" ]] && opts=""
+            else
+                for arg in ${args}; do
+                if [[ "${spec}" ]] && [[ "${arg:0:${#spec}}" == "${spec}" ]]; then
+                [[ -n "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
+                fi
+            done
+            [[ "${opts}" == "${spec}" ]] && opts=""
+            fi
+            COMPREPLY=($(compgen -W "${opts}"))
+            return 0
+        elif [[ "${cur}" == "--exec="* ]]; then
+            spec=${cur##--exec=}
+            for arg in ${execopts}; do
+            if [[ "${arg:0:${#spec}}" == "${spec}" ]]; then
+                [[ -n "${opts}" ]] && opts="${opts} ${arg}" || opts="${arg}"
+            fi
+            done
+            [[ "${opts}" == "${spec}" ]] && opts=""
+            COMPREPLY=($(compgen -W "${opts}"))
+            return 0
+        else
+            opts="--classpath --clean-system-classpath --clean-user-classpath \
+                --exec \
+            --full-classpath \
+                --jar --java --javac --java-version --jdk-home --jre-home \
+                --list-available-packages --list-available-vms \
+            --nocolor \
+            --set-system-classpath --set-system-vm --set-user-classpath --set-user-vm"
+            [[ "$prev" == "--nocolor" ]] && opts="${opts/--nocolor}"
+        fi
+            ;;
+        esac
+    elif [[ "$prev" == "--nocolor" ]] && [ ${curword} -eq 2 ] && [ $numwords -le 3 ]; then
+    opts="--classpath --clean-system-classpath --clean-user-classpath \
+        --exec \
+        --full-classpath \
+        --jar --java --javac --java-version --jdk-home --jre-home \
+        --list-available-packages --list-available-vms \
+        --set-system-classpath --set-system-vm --set-user-classpath --set-user-vm"
+    fi
+    COMPREPLY=($(compgen $nospace -W "${opts}" -- ${cur}))
+    return 0
+} &&
+complete $nospace -F _javaconfig java-config
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

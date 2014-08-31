@@ -1,0 +1,45 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# gcc-config completion command
+#
+_gcc_config() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-O --use-old \
+        -P --use-portage-chost \
+        -c --get-current-profile \
+        -l --list-profiles \
+        -E --print-environ \
+        -B --get-bin-path \
+        -L --get-lib-path \
+        -X --get-stdcxx-incdir"
+
+    if [[ "${cur}" == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    elif [[ ${COMP_CWORD} -eq 1 ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) \
+            $(compgen -W "$(gcc-config -l | sed -r -e 's/(\[([^]]*)\]) //g')" \
+                -- ${cur}) )
+        return 0
+    fi
+
+    case "${prev}" in
+        -O|--use-old|-P|--use-portage-chost|-c|--get-current-profile|-l|--list-profiles)
+            COMPREPLY=()
+            ;;
+        *)
+            COMPREPLY=( $(compgen -W "\
+                $(gcc-config -l | sed -r -e 's/(\[([^]]*)\]) //g')" -- ${cur}) )
+            ;;
+    esac
+} &&
+complete -F _gcc_config gcc-config
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

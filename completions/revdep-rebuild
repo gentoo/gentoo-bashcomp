@@ -1,0 +1,55 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+_revdep_rebuild() {
+    local cur prev numwords opts
+    local words i x
+    local action actionpos
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    numwords=${#COMP_WORDS[*]}
+
+    if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
+            COMPREPLY=($(compgen -f -- ${cur}))
+            return 0
+        fi
+
+    # find action
+    for ((i = 0; i < ${numwords}; i++ )); do
+        case ${COMP_WORDS[${i}]} in
+            --library|-L)
+                action=${COMP_WORDS[${i}]}
+                actionpos=${i}
+                ;;
+            --help|-h)
+                action=${COMP_WORDS[${i}]}
+                actionpos=${i}
+                ;;
+        esac
+    done
+
+    if [[ ${cur} == -* ]]; then
+        if [[ ${cur} == --* ]]; then
+            opts="--exact --help --ignore --keep-temp --library --nocolor --no-ld-path --no-order --no-progress --no-util --pretend --quiet --verbose"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        else
+            opts="-e -h -i -k -L -l -o -p -P -q -u -v"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        fi
+        return 0
+    fi
+    if [[ ${action} == '--library' ]] || [[ ${action} == '-L' ]] ; then
+        if [[ "${cur}" == */* ]]; then
+            COMPREPLY=( $(builtin cd @GENTOO_PORTAGE_EPREFIX@/lib; compgen -f -- "${cur}") )
+        else
+            COMPREPLY=( $(builtin cd @GENTOO_PORTAGE_EPREFIX@/lib; compgen -X '/' -f -- "${cur}") )
+        fi
+    fi
+    return 0
+} &&
+complete -F _revdep_rebuild revdep-rebuild
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

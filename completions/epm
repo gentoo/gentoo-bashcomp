@@ -1,0 +1,48 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+source "@helpersdir@/gentoo-common.sh"
+
+_epm() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD]}"
+    opts="-q --query -V -y --verify -e --erase --help"
+
+    if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        return 0
+    fi
+
+    case "${prev}" in
+        --help)
+            COMPREPLY=()
+            ;;
+        -q|--query)
+            _pkgname -I ${cur}
+            COMPREPLY=($(compgen -W "${COMPREPLY[@]} -l -f -G -a" -- ${cur}))
+            ;;
+        *)
+            local x all=0 file=0
+            for x in ${COMP_WORDS[@]} ; do
+                [[ ${x} == -* ]] || continue
+                [[ ${x} == *f* ]] && file=1
+                [[ ${x} == *a* ]] && all=1
+            done
+
+            if [[ ${file} -eq 1 ]] ; then
+                COMPREPLY=($(compgen -f -- ${cur}))
+            elif [[ ${all} -eq 1 ]] ; then
+                COMPREPLY=()
+            else
+                _pkgname -I ${cur}
+            fi
+            ;;
+    esac
+} &&
+complete -o filenames -F _epm epm
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

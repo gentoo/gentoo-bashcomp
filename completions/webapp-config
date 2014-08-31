@@ -1,0 +1,169 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# webapp-config completion
+#
+
+_webapp_complete_appver()
+{
+    local x proot ibase cur="$2"
+    eval $(. @GENTOO_PORTAGE_EPREFIX@/etc/vhosts/webapp-config ; \
+        echo proot="${MY_PERSISTROOT:-@GENTOO_PORTAGE_EPREFIX@/var/db/webapps}" ; \
+        echo ibase="${WA_INSTALLSBASE:-installs}")
+
+    case "$1" in
+    # complete on installed
+    installed)
+        COMPREPLY=($(compgen -W "$(\
+        for x in ${proot}/*/*/installs ; do \
+            if [[ -f "${x}" ]] ; then \
+            local y="${x%/*}" ; \
+            y="${y%/*}" ; \
+            echo "${y##*/}" ; \
+            fi ; \
+        done)" -- ${cur}))
+        ;;
+
+    # complete on uninstalled
+    uninstalled)
+        COMPREPLY=($(compgen -W "$(\
+        for x in ${proot}/*/* ; do \
+            if [[ ! -f "${x}/${ibase}" ]] ; then \
+            local y="${x%/*}" ; \
+            echo "${y##*/}" ; \
+            fi ; \
+        done)" -- ${cur}))
+        ;;
+
+    # all
+    all)
+        COMPREPLY=($(compgen -W "$(\
+        for x in ${proot}/* ; do \
+            [[ -d "${x}" ]] && echo "${x##*/}" ; \
+        done)" -- ${cur}))
+        ;;
+
+    # complete on version
+    *)
+        [[ -d "${proot}/$1" ]] || return 1
+        COMPREPLY=($(compgen -W "$(\
+        for x in ${proot}/$1/* ; do \
+            [[ -d "${x}" ]] && echo "${x##*/}" ; \
+        done)" -- ${cur}))
+        ;;
+    esac
+}
+
+_webapp_config()
+{
+    local cur prev actions opts hostroot
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    actions="-I --install -U --upgrade -C --clean --list-installs \
+    --list-unused-installs --show-installed --show-postinst \
+    --help -v --version"
+    opts="--bug-report --pretend -p -u --user -g --group \
+    -d --dir -h --host -V --verbose --soft --secure --virtual-dirs \
+    --virtual-files --force-virtual"
+
+    eval $(. @GENTOO_PORTAGE_EPREFIX@/etc/vhosts/webapp-config ; \
+    echo hostroot="${VHOST_ROOT:-@GENTOO_PORTAGE_EPREFIX@/var/www}")
+
+    # --bug-report, --pretend, and -p can only be used as first arg
+    if [[ ${COMP_CWORD} -gt 1 ]] ; then
+        opts="${opts/--bug-report --pretend -p}"
+    fi
+
+    if [[ "${cur}" == -* ]] || [[ ${COMP_CWORD} -eq 1 ]] ; then
+        COMPREPLY=($(compgen -W "${opts} ${actions}" -- ${cur}))
+        return 0
+    fi
+
+    case "${prev}" in
+        --bug-report|-p|--pretend)
+        COMPREPLY=($(compgen -W "${opts} ${actions}" -- ${cur}))
+        ;;
+
+        -I|--install)
+            _webapp_complete_appver all ${cur}
+            ;;
+
+        -U|--upgrade)
+            _webapp_complete_appver installed ${cur}
+            ;;
+
+        # only complete on -d since it is required if -C is specified
+        -C|--clean)
+            COMPREPLY=($(compgen -W "-d" -- ${cur}))
+            ;;
+
+        --list-unused-installs)
+            _webapp_complete_appver uninstalled ${cur}
+            ;;
+
+        --list-installs|--show-postinst)
+            _webapp_complete_appver all ${cur}
+            ;;
+
+        #  hrm... anyone know a better way to reliably do this?
+        -h|--host)
+            local x
+            COMPREPLY=($(compgen -W "$(\
+                for x in ${hostroot}/* ; do \
+                    [[ -d "${x}" ]] && echo "${x##*/}" ; \
+                done)" -- ${cur}))
+            ;;
+
+        --virtual*)
+            COMPREPLY=($(compgen -W "server-owned config-owned virtual" \
+            -- ${cur}))
+            ;;
+
+        -d|--dir)
+        local host x i=0
+                # see if --host has been specified, and if so, get the value
+                # that was passed to it.
+        for x in ${COMP_WORDS[@]} ; do
+            if [[ "${x}" == "-h" || "${x}" == "--host" ]] ; then
+            host="${COMP_WORDS[((i+1))]}"
+            break
+            fi
+            i=$((i+1))
+        done
+
+                # otherwise, use the default host
+        if [[ "${host}" == "" ]] ; then
+            eval $(. @GENTOO_PORTAGE_EPREFIX@/etc/vhosts/webapp-config ; \
+            echo host="${VHOST_HOSTNAME:-localhost}")
+        fi
+
+            COMPREPLY=($(compgen -W "$(\
+            for x in ${hostroot}${host}/* ; do \
+            [[ -d "${x}" ]] && echo "${x}" ; \
+            done)" -- ${cur}))
+            ;;
+        -u|--user)
+            COMPREPLY=($(compgen -u -- ${cur}))
+            ;;
+        -g|--group)
+            COMPREPLY=($(compgen -g -- ${cur}))
+            ;;
+
+        # we haven't recognized it yet, so more than likely ${prev}
+        # is a 'app-name' ; assuming it is indeed a valid 'app-name'
+        # (_webapp_complete_appver does the check), complete on available
+        # 'app-version's
+        *)
+            _webapp_complete_appver ${prev} ${cur} || \
+                    _webapp_complete_appver all ${cur}
+            ;;
+    esac
+} &&
+complete -F _webapp_config webapp-config
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

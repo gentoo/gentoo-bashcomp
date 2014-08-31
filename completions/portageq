@@ -1,0 +1,87 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+source "@helpersdir@/gentoo-common.sh"
+
+#
+# portageq completion
+#
+
+_portageq() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts="config_protect_mask \
+      config_protect \
+      vdb_path \
+      gentoo_mirrors \
+      all_best_visible \
+      match \
+      best_visible \
+      mass_best_visible \
+      has_version \
+      portdir \
+      envvar \
+      mass_best_version \
+      best_version \
+      pkgdir \
+      portdir_overlay \
+      distdir"
+
+    if [[ $COMP_CWORD -eq 1 ]] ; then
+    # would always be correct, but it's pretty slow...
+    #COMPREPLY=($(compgen -W "$(portageq | grep '^   [[:lower:]]' | \
+    #    sed -e 's/^.*[[:space:]]\([[:lower:]_]\+\)[[:space:]].*$/\1/')" \
+    #    -- ${cur}))
+    COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+    fi
+
+    case "${prev}" in
+    config*|vdb_path|gentoo_mirrors|*dir*)
+        COMPREPLY=()
+        ;;
+
+    # this also isn't the fastest, but I welcome an alternative method
+    envvar)
+        COMPREPLY=($(compgen -W "$(env -i emerge -v --info | \
+                sed -n -e '/^[[:upper:]].*=".*"/s/^\(.*\)=".*$/\1/p')" -- ${cur}))
+        ;;
+
+    *v@(isible|ersion)|match)
+        COMPREPLY=($(compgen $nospace -W '/' -- $cur))
+        ;;
+
+    # $prev is a path, so complete on category/package
+    */*)
+            local x a=0
+            for x in ${COMP_WORDS[@]} ; do
+                # This is the only one
+                if [[ "${x}" == "all_best_visible" ]] ; then
+                    a=1
+                    break
+                fi
+            done
+
+            if [[ ${a} -eq 1 ]] ; then
+                COMPREPLY=()
+            else
+                # Check for conditional.
+#                cond="${cur%%[A-Za-z0-9]*}"
+#                cur="${cur:${#cond}}"
+
+#                if [[ -n "${cond}" ]] ; then
+#                    _pkgname -A $cur
+#                else
+                    _pkgname -A $cur
+#                fi
+            fi
+        ;;
+    esac
+} &&
+complete -F _portageq portageq
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

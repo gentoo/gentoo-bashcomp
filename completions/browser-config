@@ -1,0 +1,31 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# browser-config completion command
+#
+_browserconfig()
+{
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    if [[ ${COMP_CWORD} -eq 1 ]]; then
+    COMPREPLY=($(compgen -W '-b -h -m' -- ${cur}))
+    elif [[ "${prev}" == "-b" ]]; then
+    COMPREPLY=($(compgen -W "$(for i in @GENTOO_PORTAGE_EPREFIX@/usr/share/browser-config/*; do [ -f $i ] && echo ${i##*/}; done)" $cur))
+    elif [[ "${prev}" == "-m" ]]; then
+        COMPREPLY=($(compgen -W "same_window new_window new_tab new_browser" -- ${cur}))
+    if [[ -z "${COMPREPLY}" ]]; then
+        COMPREPLY=''
+    fi
+    else
+    unset COMPREPLY
+    fi
+    return 0
+} &&
+complete -F _browserconfig browser-config
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

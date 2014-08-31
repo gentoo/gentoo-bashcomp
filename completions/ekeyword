@@ -1,0 +1,46 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+source "@helpersdir@/gentoo-common.sh"
+
+#
+# ekeyword completion
+#
+
+_ekeyword()
+{
+    local cur portdir archl_s archl_u archl_r archl_m arch
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    portdir=$(_portdir)
+
+    [[ -f ${portdir}/profiles/arch.list ]] || return 0
+
+    for arch in all $(< ${portdir}/profiles/arch.list) ; do
+        archl_m="${archl_m} -${arch}"
+        archl_u="${archl_u} ~${arch}"
+        archl_r="${archl_r} ^${arch}"
+        archl_s="${archl_s}  ${arch}"
+    done
+
+    case ${cur} in
+        -*)
+            COMPREPLY=($(compgen -W "${archl_m}" -- ${cur}))
+            ;;
+        ~*)
+            COMPREPLY=($(compgen -W "${archl_u}" -- ${cur}))
+            ;;
+        ^*)
+            COMPREPLY=($(compgen -W "${archl_r}" -- ${cur}))
+            ;;
+        *)
+            COMPREPLY=($(compgen -W "${archl_s}" -- ${cur}))
+            _filedir 'ebuild'
+            ;;
+        esac
+} &&
+complete -o filenames -F _ekeyword ekeyword
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

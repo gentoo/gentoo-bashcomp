@@ -1,0 +1,60 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+source "@helpersdir@/gentoo-common.sh"
+
+_euse() {
+    local cur prev opts sopts use portdir
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="-h --help -v --version -i --info -I --info-installed -a --active
+        -E --enable -D --disable -P --prune"
+    sopts="-g --global -l --local"
+
+    if [[ ${cur} == -* ]] && [[ ${COMP_CWORD} -eq 1 ]] ; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        return 0
+    fi
+
+    case "${prev}" in
+        -h|--help|-v|--version)
+            COMPREPLY=()
+            ;;
+        -a|--active)
+            COMPREPLY=($(compgen -W "${sopts}" -- ${cur}))
+            ;;
+        -i|--info|-I|--info-installed|-E|--enable|-D|--disable|-P|--prune)
+            portdir=$(_portdir)
+        use="$(sed -n -e 's/^\([^ ]\+\) - .*$/\1/p' ${portdir}/profiles/use.desc) \
+        $(sed -n -e 's/^[^ ]\+:\([^ ]*\) - .*$/\1/p' ${portdir}/profiles/use.local.desc)"
+        COMPREPLY=($(compgen -W "${use} ${sopts}" -- ${cur}))
+            ;;
+        *)
+            local l=0 g=0
+
+            if [[ ${COMP_LINE} == *" "@(-l|--local)* ]] ; then
+                l=1
+            elif [[ ${COMP_LINE} == *" "@(-g|--global)* ]] ; then
+                g=1
+            fi
+
+            if [[ ${COMP_LINE} == *" "@(-i|--info|-I|--info-installed|-E|--enable|-D|--disable|-P|--prune)* ]]
+            then
+                portdir=$(_portdir)
+
+                if [[ ${l} -eq 1 ]] ; then
+                    use=$(sed -n -e 's/^[^ ]\+:\([^ ]*\) - .*$/\1/p' ${portdir}/profiles/use.local.desc)
+                elif [[ ${g} -eq 1 ]] ; then
+                    use=$(sed -n -e 's/^\([^ ]\+\) - .*$/\1/p' ${portdir}/profiles/use.desc)
+                fi
+
+                COMPREPLY=($(compgen -W "${use}" -- ${cur}))
+            fi
+    esac
+} &&
+complete -F _euse euse
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

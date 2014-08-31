@@ -1,0 +1,280 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+source "@helpersdir@/gentoo-common.sh"
+
+#
+# Bash completion for the Gentoo 'equery' command
+#
+_equery()
+{
+    local cur prev mode portdir i j
+    portdir=$(_portdir)
+    mode="GLOBAL"
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    # Find out what we're currently doing here.
+    j=0
+    for i in "${COMP_WORDS[@]}"; do
+        if [[ $j -lt $COMP_CWORD ]]; then
+        j=$((j + 1))
+        case $i in
+            @(belongs|ch@(anges|eck)|dep@(ends|graph)|files|has?(use)|keywords|list|meta|size|uses|which|b|c|k|d|g|f|a|h|y|l|m|s|u|w))
+            mode=$i
+            ;;
+        esac
+    fi
+    done
+    # Now get to work.
+    case $mode in
+    GLOBAL)
+        # Complete commands and global options.
+        case $cur in
+        -*)
+            COMPREPLY=($(compgen -W "-q --quiet -C --nocolor -h --help -V --version" -- $cur))
+            ;;
+        *)
+            COMPREPLY=($(compgen -W "belongs changes check depends depgraph files has hasuse keywords list meta size uses which" -- $cur))
+            ;;
+        esac
+        ;;
+    c?(hanges))
+        # Complete package name only if it is not yet supplied.
+        if [[ ${prev} == ${mode} ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help" -- $cur))
+                ;;
+                *)
+                    _pkgname -A $cur
+                ;;
+            esac
+        else
+            case $cur in
+                *)
+                    COMPREPLY=($(compgen -W "-h --help -l --latest -f --full --limit --from --to" -- $cur))
+                ;;
+            esac
+        fi
+        ;;
+    f?(iles))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            # --filter=<list>: completion of the files types list
+            if [[ ${prev} == "-f" || "${cur}" == "--filter="* ]] ; then
+                COMPREPLY=($(_list_compgen "${cur#--filter=}" , \
+                    dir,obj,sym,dev,fifo,path,conf,cmd,doc,man,info))
+                return 0
+            fi
+        case $cur in
+            --f*)
+            # don't handle --filter= with others to avoid space after the "="
+            COMPREPLY=($(compgen -P "--filter=" \
+                -W "dir obj sym dev fifo path conf cmd doc man info"))
+            ;;
+            -*)
+            COMPREPLY=($(compgen -W "-h --help -m --md5sum -s --timestamp -t
+                --type --tree -f --filter=" -- $cur))
+            ;;
+            *)
+            # Only installed packages can have their files listed.
+                _pkgname -I $cur
+            ;;
+        esac
+        fi
+        ;;
+    a|has)
+        COMPREPLY=($(compgen -W "-h --help -I --exclude-installed -o \
+             --overlay-tree -p --portage-tree -F --format" -- $cur))
+        ;;
+    y|keywords)
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case "${cur}" in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help -v --version -a --arch -A
+                    --align -T --top-position -B --bold -C --color -O --overlays
+                    -P --prefix -S --ignore-slot" -- $cur))
+                    ;;
+                *)
+                    _pkgname -A $cur
+                    ;;
+            esac
+        fi
+        ;;
+    l?(ist))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+        case "${cur}" in
+            -*)
+            COMPREPLY=($(compgen -W "-h --help -d --duplicates -b
+                --binpkgs-missing -f --full-regex -m --mask-reason -I
+                --exclude-installed -o --overlay-tree -p --portage-tree -F
+                --format" -- $cur))
+            ;;
+            *)
+                if [[ ${COMP_WORDS[@]} =~ -(p|o) || ${COMP_WORDS[@]} =~ --(portage|overlay)-tree ]]; then
+                    _pkgname -A $cur
+                else
+                    _pkgname -I $cur
+                fi
+            ;;
+        esac
+        fi
+        ;;
+    b?(elongs))
+        # Only complete if the previous entry on the command line is not
+        # a file name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help -f --full-regex -e
+                        --early-out -n --name-only" -- $cur))
+                    ;;
+                *)
+                    COMPREPLY=($(compgen -f -- $cur) \
+                        $(compgen -d -S '/' -- $cur))
+                    ;;
+            esac
+        fi
+        ;;
+    u?(ses))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help -a --all" -- $cur))
+                ;;
+                *)
+                    # Complete on all package names.
+                    _pkgname -A $cur
+                ;;
+            esac
+        fi
+        ;;
+    w?(hich))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "-h --help -m --include-masked" -- $cur))
+                ;;
+                *)
+                    # Complete on all package names.
+                    _pkgname -A $cur
+                ;;
+            esac
+        fi
+        ;;
+    g|depgraph)
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case $cur in
+            -*)
+                COMPREPLY=($(compgen -W "-h --help -A --no-atom -M --no-mask -U
+                    --no-useflags -l --linear --depth" -- $cur))
+            ;;
+            *)
+            # Complete on all package names.
+            _pkgname -A $cur
+            ;;
+        esac
+        fi
+        ;;
+    d?(epends))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+        case $cur in
+            -*)
+                COMPREPLY=($(compgen -W "-h --help -a --all-packages -D
+                    --indirect --depth" -- $cur))
+            ;;
+            *)
+            case $prev in
+                -a|--all-packages)
+                # Complete on all package names.
+                _pkgname -A $cur
+                ;;
+                *)
+                # Complete on installed package names.
+                    _pkgname -I $cur
+                ;;
+                        esac
+                        ;;
+        esac
+        fi
+        ;;
+    m?(eta))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            _equery_meta $cur
+        fi
+        ;;
+    k|check)
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} ]]; then
+            case $cur in
+                -*)
+                    COMPREPLY=($(compgen -W "${COMPREPLY[@]} -h --help -f
+                        --full-regex -o --only-failures" -- ${cur}))
+                ;;
+                *)
+                # Only installed packages can have their integrity verified.
+                    _pkgname -I $cur
+                ;;
+            esac
+        fi
+        ;;
+    s?(ize))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+        case $cur in
+            -*)
+            COMPREPLY=($(compgen -W "-h --help -b --bytes -f
+                --full-regex" -- $cur))
+            ;;
+            *)
+            # Only installed packages can have their size calculated.
+            _pkgname -I $cur
+            ;;
+        esac
+        fi
+        ;;
+        h?(asuse))
+        # Only complete if the previous entry on the command line is not
+        # a package name.
+        if [[ ${prev} == ${mode} || ${prev:0:1} == "-" ]]; then
+            case $cur in
+                -*)
+                COMPREPLY=($(compgen -W "--help -i --installed -I --exclude-installed -p --portage-tree -o --overlay" -- $cur))
+                ;;
+                *)
+                local glob loc
+                        [[ -f ${portdir}/profiles/use.desc ]] || return 0
+                        [[ -f ${portdir}/profiles/use.local.desc ]] || return 0
+                glob=$(sed -n -e 's/^\([^ ]\+\) - .*$/\1/p' ${portdir}/profiles/use.desc)
+                loc=$(sed -n -e 's/^[^ ]\+:\([^ ]*\) - .*$/\1/p' ${portdir}/profiles/use.local.desc)
+                COMPREPLY=($(compgen -W "$glob $loc" -- $cur))
+                ;;
+            esac
+            fi
+            ;;
+    esac
+    return 0
+} &&
+complete -F _equery equery
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

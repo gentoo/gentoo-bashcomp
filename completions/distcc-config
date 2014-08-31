@@ -1,0 +1,41 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# distcc-config completion command
+#
+_distccconfig()
+{
+    local cur curword numwords opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    numwords=${#COMP_WORDS[*]}
+    curword=${COMP_CWORD}
+    if [[ ${numwords} -gt 3 ]]; then
+    unset COMPREPLY
+    return 0
+    fi
+    if [[ "${cur}" == -* ]] || [ ${curword} -eq 1 ]; then
+    if [[ ${numwords} -le 2 ]] && [[ ${curword} -eq 1 ]]; then
+        opts="--get-hosts \
+        --get-verbose \
+        --get-log \
+        --set-hosts \
+        --set-verbose \
+        --set-log \
+        --add-path \
+        --no-path"
+    else
+        opts=""
+    fi
+    else
+    opts=""
+    fi
+    COMPREPLY=($(compgen -W "${opts}" | grep ^$cur))
+    return 0
+} &&
+complete -F _distccconfig distcc-config
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

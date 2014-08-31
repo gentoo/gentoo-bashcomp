@@ -1,0 +1,28 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+source "@helpersdir@/gentoo-common.sh"
+
+#
+# epkginfo completion
+#
+
+_epkginfo()
+{
+    local cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # Only complete if the previous entry on the command line is not
+    # a package name.
+    if [[ ${COMP_CWORD} -eq 1 || ${prev:0:1} == "-" ]]; then
+        _equery_meta $cur
+    fi
+
+    return 0
+} &&
+complete -F _epkginfo epkginfo
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

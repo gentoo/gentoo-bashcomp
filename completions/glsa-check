@@ -1,0 +1,33 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+_glsa_check() {
+    local cur opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts="-l --list -d --dump --print -t --test -p --pretend -f --fix -i
+    --inject -n --nocolor -e --emergelike -h --help -V --version -v --verbose
+    -c --cve -m --mail"
+
+    if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        return 0
+    fi
+
+    # too slow otherwise
+    if [[ ! -f ${ROOT}/tmp/gc.out ]] || \
+        [[ $(stat ${ROOT}/tmp/gc.out | \
+        sed -n -e 's/^Modify: \([[:digit:]]\+-[[:digit:]]\+-[[:digit:]]\+\).*$/\1/p') != "$(date +%F)" ]]
+    then
+        glsa-check -nl 2>/dev/null | \
+            sed -n -e  's/^\([[:digit:]]\+-[[:digit:]]\+\) .*$/\1/p' > \
+                ${ROOT}/tmp/gc.out
+    fi
+
+    COMPREPLY=($(compgen -W "${opts} $(< ${ROOT}/tmp/gc.out)" -- ${cur}))
+} &&
+complete -F _glsa_check glsa-check
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80

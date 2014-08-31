@@ -1,0 +1,28 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# rc-status completion command
+#
+_rcstatus()
+{
+    local cur
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    if [[ $COMP_CWORD -eq 1 ]]; then
+        if [[ "${cur}" == --* ]]; then
+        COMPREPLY=($(compgen -W '--all --list --unused' -- ${cur}))
+    elif [[ "${cur}" == -* ]]; then
+        COMPREPLY=($(compgen -W '-a -l -u' -- ${cur}))
+    else
+        COMPREPLY=($(compgen -W "$(rc-status --list)" -- ${cur}))
+    fi
+    else
+    unset COMPREPLY
+    fi
+    return 0
+} &&
+complete -F _rcstatus rc-status
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80
