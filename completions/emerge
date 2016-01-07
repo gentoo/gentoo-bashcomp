@@ -86,7 +86,8 @@ _emerge()
             fi
         elif [[ ${cur} == --* ]]; then
             # Complete on long options.
-            opts="--alphabetical --ask \
+            opts="--alphabetical \
+                --ask --autounmask-write \
                 --buildpkg --buildpkgonly \
                 --changelog --clean --color=y --color=n --columns --complete-graph --config \
                 --debug --deep --depclean \
