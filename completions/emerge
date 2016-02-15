@@ -29,7 +29,7 @@ _emerge()
     # find action
     for x in ${COMP_LINE} ; do
         if [[ ${x} =~ ^(system|world)$ ]] || [[ ${x} =~ -[CPcs] ]] || \
-            [[ ${x} =~ --(clean|config|depclean|info|metadata|prune|regen|resume|search|sync|unmerge) ]]
+            [[ ${x} =~ --(clean|config|depclean|info|metadata|prune|rage-clean|regen|resume|search|sync|unmerge) ]]
         then
             action=${x}
             break
@@ -101,7 +101,7 @@ _emerge()
                 --newuse --noconfmem --nodeps --noreplace --nospinner \
                 --oneshot --onlydeps \
                 --pretend --prune \
-                --quiet \
+                --quiet --rage-clean \
                 --reinstall=changed-use --regen \
                 --search \
                 --sync \
@@ -153,7 +153,7 @@ _emerge()
     fi
 
     # Complete on installed packages when unmerging.
-    if [[ "${action}" == '--unmerge' ]]; then
+    if [[ "${action}" =~ --(rage-clean|unmerge) ]]; then
     if [[ -n "${cur}" ]] ; then
         if [[ "${cur}" == */* ]]; then
         words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg; compgen -G "${cur}*")
