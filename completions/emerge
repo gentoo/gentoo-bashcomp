@@ -26,6 +26,12 @@ _emerge()
         return 0
     fi
 
+    if [[ ${cur} =~ ^@ ]] ; then
+        local SET_LIST=($(emerge --list-sets))
+        COMPREPLY=($(compgen -W '${SET_LIST[@]/#/@}' ${cur}))
+        return 0
+    fi
+
     # find action
     for x in ${COMP_LINE} ; do
         if [[ ${x} =~ ^(system|world)$ ]] || [[ ${x} =~ -[CPcs] ]] || \
