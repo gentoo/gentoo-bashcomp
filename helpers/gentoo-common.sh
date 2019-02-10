@@ -65,7 +65,7 @@ _parsereposconf() {
 
     for f in @GENTOO_PORTAGE_EPREFIX@/usr/share/portage/config/repos.conf \
         @GENTOO_PORTAGE_EPREFIX@/etc/portage/repos.conf \
-        @GENTOO_PORTAGE_EPREFIX@/etc/portage/repos.conf/*.conf; do
+        @GENTOO_PORTAGE_EPREFIX@/etc/portage/repos.conf/*; do
 
         [[ -f ${f} ]] || continue
         insection=0
