@@ -35,7 +35,7 @@ _emerge()
     # find action
     for x in ${COMP_LINE} ; do
         if [[ ${x} =~ ^(system|world)$ ]] || [[ ${x} =~ -[CPcs] ]] || \
-            [[ ${x} =~ --(clean|config|depclean|info|metadata|prune|rage-clean|regen|resume|search|sync|unmerge) ]]
+            [[ ${x} =~ --(clean|config|depclean|deselect|info|metadata|prune|rage-clean|regen|resume|search|sync|unmerge) ]]
         then
             action=${x}
             break
@@ -96,7 +96,7 @@ _emerge()
                 --ask --autounmask-write \
                 --buildpkg --buildpkgonly \
                 --changelog --clean --color=y --color=n --columns --complete-graph --config \
-                --debug --deep --depclean \
+                --debug --deep --depclean --deselect \
                 --emptytree \
                 --fetch-all-uri --fetchonly \
                 --getbinpkg --getbinpkgonly \
