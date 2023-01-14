@@ -1,16 +1,15 @@
 certificate version 0.1
-pusher CB22A4E8B1F8A2DA 1637078935 +0100
-pushee git+ssh://git.gentoo.org/proj/gentoo-bashcomp
-nonce 1637078935-994046c5a6763cbf592e1add561b64a16e128f26
+pusher Sam James <sam@gentoo.org> 1673714328 +0000
+pushee git+ssh://git.gentoo.org/proj/gentoo-bashcomp.git
+nonce 1673714328-0d6a926997eba89e878ea1af0ffe3b9e019bf441
 
-7052f3bab2abeb620733fff21b2809429bacc554 f3f401b1166bb3d7f79b9f3cb8ebfc3527cd4394 refs/heads/master
+f3f401b1166bb3d7f79b9f3cb8ebfc3527cd4394 a7513c33fc3744c7664c8c6c9c3c1bb22f0b0ab9 refs/heads/master
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
 
-iNUEABYKAH0WIQQ70bdNS/cySlTs03rIAumRM3kaHAUCYZPXl18UgAAAAAAuAChp
-c3N1ZXItZnByQG5vdGF0aW9ucy5vcGVucGdwLmZpZnRoaG9yc2VtYW4ubmV0M0JE
-MUI3NEQ0QkY3MzI0QTU0RUNEMzdBQzgwMkU5OTEzMzc5MUExQwAKCRDIAumRM3ka
-HGOxAQC/zcNcEWfUwgBxJxm3nqH2M2MFTCf0rBKdv9eT+JBj6wEA3YUQLGSwXn2o
-wTil9osjLAESzi0NfZ1wyWN+lMVZIw8=
-=KlmU
+iOUEABYKAI0WIQQlpruI3Zt2TGtVQcJzhAn1IN+RkAUCY8LamF8UgAAAAAAuAChp
+c3N1ZXItZnByQG5vdGF0aW9ucy5vcGVucGdwLmZpZnRoaG9yc2VtYW4ubmV0MjVB
+NkJCODhERDlCNzY0QzZCNTU0MUMyNzM4NDA5RjUyMERGOTE5MA8cc2FtQGdlbnRv
+by5vcmcACgkQc4QJ9SDfkZCqYgEAmosRh6k2WMhPEyVq6A9/Bas6i2OHMxEg4lvq
+KldIGx8A/AssIyjijq7Z5xZJyDe0fEks1pJPBXzrWH2U6jj17okH
+=SR4j
 -----END PGP SIGNATURE-----
