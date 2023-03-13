@@ -93,7 +93,7 @@ _emerge()
         elif [[ ${cur} == --* ]]; then
             # Complete on long options.
             opts="--alphabetical \
-                --ask --autounmask-write \
+                --ask --autounmask-write --autounmask-keep-keywords --autounmask-continue \
                 --buildpkg --buildpkgonly \
                 --changelog --clean --color=y --color=n --columns --complete-graph --config \
                 --debug --deep --depclean --deselect \
@@ -105,14 +105,14 @@ _emerge()
                 --keep-going \
                 --metadata \
                 --newuse --noconfmem --nodeps --noreplace --nospinner \
-                --oneshot --onlydeps \
+                --oneshot --onlydeps --onlydeps-with-ideps --onlydeps-with-rdeps \
                 --pretend --prune \
                 --quiet --rage-clean \
                 --reinstall=changed-use --regen \
                 --search \
                 --sync \
                 --tree \
-                --unmerge --update --upgradeonly --usepkg --usepkgonly \
+                --unmerge --update --update-if-installed --upgradeonly --usepkg --usepkgonly \
                 --verbose \
                 --with-bdeps=y --with-bdeps=n"
             if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
