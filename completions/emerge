@@ -93,12 +93,25 @@ _emerge()
         elif [[ ${cur} == --* ]]; then
             # Complete on long options.
             opts="--alphabetical \
-                --ask --autounmask-write --autounmask-keep-keywords --autounmask-continue \
+                --ask \
+                --autounmask-write --autounmask-keep-keywords --autounmask-continue \
+                --autounmask-backtrack --autounmask-only --autounmask-unrestricted-atoms \
+                --autounmask-keep-masks --autounmask-license --autounmask-use \
+                --accept-properties --accept-restrict --alert --alert=y --alert=n \
+		--ask-enter-invalid \
+		--binpkg-changed-deps --binpkg-respect-use \
+		--buildpkg-exclude \
                 --buildpkg --buildpkgonly \
+		--backtrack= \
                 --changelog --clean --color=y --color=n --columns --complete-graph --config \
+		--complete-graph-if-new-use --complete-graph-if-new-ver \
+		--config-root \
                 --changed-deps --changed-deps-report --changed-slot --changed-use \
                 --debug --deep --depclean --deselect \
+		--depclean-lib-check \
+		--dynamic-deps --dynamic-deps=y --dynamic-deps=n \
                 --emptytree \
+		--exclude \
                 --fetch-all-uri --fetchonly \
                 --getbinpkg --getbinpkgonly \
                 --ignore-default-opts --info \
