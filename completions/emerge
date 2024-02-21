@@ -114,7 +114,7 @@ _emerge()
                 --tree \
                 --unmerge --update --update-if-installed --upgradeonly --usepkg --usepkgonly \
                 --verbose --verbose-conflicts \
-                --with-bdeps=y --with-bdeps=n"
+                --with-bdeps=y --with-bdeps=n --with-test-deps"
             if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
                 opts="${opts} --help --resume --searchdesc --version"
             fi
