@@ -18,7 +18,7 @@
 # for PORTDIR and PORTDIR_OVERLAY.  While repos.conf overrides any value of
 # PORTDIR set in make.conf, PORTDIR_OVERLAY is incremental (combined across
 # available sources).
-# 
+#
 # This would be a hell of a lot simpler if we used portageq, but also about
 # 500 times slower.
 _portdir() {
@@ -32,7 +32,7 @@ _portdir() {
 
             source @GENTOO_PORTAGE_EPREFIX@/etc/make.conf 2>/dev/null
             source @GENTOO_PORTAGE_EPREFIX@/etc/portage/make.conf 2>/dev/null
-        
+
             overlaypath+=(${PORTDIR_OVERLAY})
 
             # strip out duplicates
@@ -52,9 +52,9 @@ _portdir() {
 
         echo "${PORTDIR}"
 
-        if [[ ${1} == -o ]]; then 
+        if [[ ${1} == -o ]]; then
             echo "${PORTDIR_OVERLAY}"
-        fi   
+        fi
     fi
 }
 
@@ -69,7 +69,7 @@ _parsereposconf() {
 
         [[ -f ${f} ]] || continue
         insection=0
-            
+
         while read -r line; do
             # skip comments and blank lines
             [[ -z ${line} || ${line} == '#'* ]] && continue
