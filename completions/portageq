@@ -47,7 +47,7 @@ _portageq() {
 
     # this also isn't the fastest, but I welcome an alternative method
     envvar)
-        COMPREPLY=($(compgen -W "$(env -i emerge -v --info | \
+        COMPREPLY=($(compgen -W "$(env -i PATH="${PATH}" emerge -v --info | \
                 sed -n -e '/^[[:upper:]].*=".*"/s/^\(.*\)=".*$/\1/p')" -- ${cur}))
         ;;
 
