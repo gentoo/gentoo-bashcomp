@@ -1,15 +1,15 @@
 certificate version 0.1
-pusher Sam James <sam@gentoo.org> 1708892091 +0000
+pusher Sam James <sam@gentoo.org> 1715397125 +0100
 pushee git+ssh://git.gentoo.org/proj/gentoo-bashcomp.git
-nonce 1708892091-cd22e3c4c0a28bbeda665e372dd3c1029b3cdf54
+nonce 1715397125-e3a4d29642ca40f7fefc92b004677b12a7a0991a
 
-6a3d1b3d78a174db6711deb8335ab998ec6bb6c5 1e4bcaf0c6052449fda9750d4865a275a87f4336 refs/heads/master
+1e4bcaf0c6052449fda9750d4865a275a87f4336 63aae2a1775e501678290c6dbeac53215decffc2 refs/heads/master
 -----BEGIN PGP SIGNATURE-----
 
-iOUEABYKAI0WIQQlpruI3Zt2TGtVQcJzhAn1IN+RkAUCZdufvF8UgAAAAAAuAChp
+iOUEABYKAI0WIQQlpruI3Zt2TGtVQcJzhAn1IN+RkAUCZj7iBV8UgAAAAAAuAChp
 c3N1ZXItZnByQG5vdGF0aW9ucy5vcGVucGdwLmZpZnRoaG9yc2VtYW4ubmV0MjVB
 NkJCODhERDlCNzY0QzZCNTU0MUMyNzM4NDA5RjUyMERGOTE5MA8cc2FtQGdlbnRv
-by5vcmcACgkQc4QJ9SDfkZCIFQEAgxxMtzEkxV6h/z6WgaKdnIRcYqk4ZXjWA9uj
-YCh8MoYBANzVVgMwIvW/SwdljF4X5qDNYKbHvQ3T7xrOlHTRuHsA
-=r1Zv
+by5vcmcACgkQc4QJ9SDfkZBAlAD9H6vFR9YiBNZf+pNHObhlO9a2JAS56x4a9bR0
+oPQPLjgBAN0nY/w6D0uuDFXJwr9TSxFPXhRTkLZx5tV+cB1BfFYO
+=8uCw
 -----END PGP SIGNATURE-----
