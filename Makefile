@@ -51,10 +51,10 @@ dist: tag
 	mkdir $(distpkg)/
 	git log > $(distpkg)/ChangeLog
 	tar vfr $(distpkg).tar $(distpkg)/ChangeLog
-	bzip2 $(distpkg).tar
+	xz $(distpkg).tar
 	rm -rf $(distpkg)/
 	@echo "success."
 
 dist-upload: dist
-	scp $(distpkg).tar.bz2 dev.gentoo.org:/space/distfiles-local/
-	ssh dev.gentoo.org chmod ug+rw /space/distfiles-local/$(distpkg).tar.bz2
+	scp $(distpkg).tar.xz dev.gentoo.org:/space/distfiles-local/
+	ssh dev.gentoo.org chmod ug+rw /space/distfiles-local/$(distpkg).tar.xz
