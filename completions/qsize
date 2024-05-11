@@ -1,0 +1,41 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 2024 Gentoo Authors
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+source "@helpersdir@/gentoo-common.sh"
+
+#
+# qsize completion (from app-portage/portage-utils)
+#
+
+_qsize() {
+    local cur=${COMP_WORDS[COMP_CWORD]} prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    local -A OPTS=(
+        [STANDALONE]='-f --filesystem -s --sum -S --sum-only -m --megabytes
+            -k --kilobytes -b --bytes -v --verbose -q --quiet -C --nocolor
+            --color -h --help -V --version'
+        [ARG]='-i --ignore -F --format --root'
+    )
+
+    case ${prev} in
+        --root)
+            _filedir -d
+            return
+            ;;
+        -i|--ignore|-F|--format)
+            COMPREPLY=()
+            return
+            ;;
+    esac
+
+    if [[ ${cur} = -* ]]; then
+        COMPREPLY=( $(compgen -W '${OPTS[*]}' -- "${cur}") )
+    else
+        _pkgname -I "${cur}"
+    fi
+} &&
+complete -F _qsize qsize
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80
