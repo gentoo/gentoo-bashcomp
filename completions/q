@@ -1,0 +1,52 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 2024 Gentoo Authors
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# q completion (from app-portage/portage-utils)
+#
+
+_q() {
+    local cur=${COMP_WORDS[COMP_CWORD]} prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    local -A OPTS=(
+        [STANDALONE]='-i --install -o --overlays -e --envvar -m --mask -v --verbose
+            -q --quiet -C --nocolor --color -h --help -V --version'
+        [APPLETS]='qatom qcheck qdepends qfile qgrep qkeyword qlist qlop
+            qmanifest qmerge qmerge qpkg qsearch qsize qtbz2 qtegrity quse
+            qwhich qxpak'
+        [ARG]='--root'
+    )
+
+    local i
+    for (( i=1; i < COMP_CWORD; i++ )); do
+        if [[ ${COMP_WORDS[i]} != -* ]]; then
+            if [[ " ${OPTS[APPLETS]} " =~ " ${COMP_WORDS[i]} " ]]; then
+                local root_command=${COMP_WORDS[i]}
+                _command_offset ${i}
+            else
+                COMPREPLY=()
+            fi
+            return
+        fi
+
+        [[ ${i} -lt ${COMP_CWORD} && " ${OPTS[ARG]} " =~ " ${COMP_WORDS[i]} " ]] && ((i++))
+    done
+
+    case ${prev} in
+        --root)
+            _filedir -d
+            return
+            ;;
+    esac
+
+    if [[ ${cur} = -* ]]; then
+        COMPREPLY=( $(compgen -W '${OPTS[STANDALONE]} ${OPTS[ARG]}' -- "${cur}") )
+    else
+        COMPREPLY=( $(compgen -W "${OPTS[APPLETS]}" -- "${cur}") )
+    fi
+} &&
+complete -F _q q
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80
