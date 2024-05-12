@@ -1,0 +1,36 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 2024 Gentoo Authors
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# qsearch completion (from app-portage/portage-utils)
+#
+
+_qsearch() {
+    local cur=${COMP_WORDS[COMP_CWORD]} prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    local -A OPTS=(
+        [STANDALONE]='-a --all -s --search -N --name-only -R --repo
+            -v --verbose -q --quiet -C --nocolor --color -h --help -V --version'
+        [ARG]='-S --desc -F --format --root'
+    )
+
+    case ${prev} in
+        --root)
+            _filedir -d
+            return
+            ;;
+        -S|--desc|-F|--format)
+            COMPREPLY=()
+            return
+            ;;
+    esac
+
+    if [[ ${cur} = -* ]]; then
+        COMPREPLY=( $(compgen -W '${OPTS[*]}' -- "${cur}") )
+    fi
+} &&
+complete -F _qsearch qsearch
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80
