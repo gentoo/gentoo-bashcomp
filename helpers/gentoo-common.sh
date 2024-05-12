@@ -1,7 +1,7 @@
 # Gentoo Linux Bash Shell Command Completion
 # Common functions to use in other completions
 #
-# Copyright 1999-2013 Gentoo Foundation
+# Copyright 1999-2013 Gentoo Authors
 # Distributed under the terms of the GNU General Public License, v2 or later
 
 # Retrieve PORTDIR/PORTDIR_OVERLAY location.
