@@ -1,0 +1,37 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 2024 Gentoo Authors
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# qkeyword completion (from app-portage/portage-utils)
+#
+
+_qkeyword() {
+    local cur=${COMP_WORDS[COMP_CWORD]} prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    local -A OPTS=(
+        [STANDALONE]='-A --showarch -i --showarch -d --showarch -t --needsstable
+            -s --stats -a --all -n --not -S --stable -T --testing
+            -v --verbose -q --quiet -C --nocolor --color -h --help -V --version'
+        [ARG]='-p --matchpkg -c --matchcat -m --matchmaint -F --format --root'
+    )
+
+    case ${prev} in
+        --root)
+            _filedir -d
+            return
+            ;;
+        -p|--matchpkg|-c|--matchcat|-m|--matchmaint|-F|--format)
+            COMPREPLY=()
+            return
+            ;;
+    esac
+
+    if [[ ${cur} = -* ]]; then
+        COMPREPLY=( $(compgen -W '${OPTS[*]}' -- "${cur}") )
+    fi
+} &&
+complete -F _qkeyword qkeyword
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80
