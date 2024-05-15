@@ -1,0 +1,77 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 2024 Gentoo Authors
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# emaint completion (from sys-apps/portage)
+#
+
+_emaint() {
+    local cur=${COMP_WORDS[COMP_CWORD]} prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    local -A OPTS=(
+        [COMMANDS]='all binhost cleanresume merges movebin moveinst sync world'
+        [STANDALONE]='-h --help -c --check -f --fix --version'
+        [LOGS]='-C --clean -p --pretend'
+        [LOGS_ARG]='-t --time'
+        [MERGES]='-y --yes'
+        [SYNC]='-a --auto -A --allrepos'
+        [SYNC_ARG]='-r --repo --sync-submodule'
+    )
+
+    local i command
+    for (( i=1; i <= COMP_CWORD; i++ )); do
+        if [[ ${COMP_WORDS[i]} != -* ]]; then
+            if [[ " ${OPTS[COMMANDS]} " =~ " ${COMP_WORDS[i]} " ]]; then
+                command=${COMP_WORDS[i]}
+                break
+            else
+                COMPREPLY=( $(compgen -W '${OPTS[COMMANDS]}' -- "${cur}") )
+                return
+            fi
+        fi
+
+        [[ ${i} -lt ${COMP_CWORD} && " ${OPTS[LOGS_ARG]} ${OPTS[SYNC_ARG]} " =~ " ${COMP_WORDS[i]} " ]] && ((i++))
+    done
+
+    case ${command} in
+        logs)
+            if [[ ${prev} = -t || ${prev} = --time ]]; then
+                COMPREPLY=()
+                return
+            fi
+            ;;
+        sync)
+            case ${prev} in
+                -r|--repo)
+                    COMPREPLY=( $(compgen -W "$(_parsereposconf -l)" -- "${cur}") )
+                    return
+                    ;;
+                --sync-submodule)
+                    COMPREPLY=( $(compgen -W 'glsa news profiles' -- "${cur}") )
+                    return
+                    ;;
+            esac
+            ;;
+    esac
+
+    COMPREPLY=( $(compgen -W '${OPTS[STANDALONE]}' -- "${cur}") )
+    case ${command} in
+        logs)
+            COMPREPLY+=( $(compgen -W '${OPTS[LOGS]} ${OPTS[LOGS_ARG]}' -- "${cur}") )
+            ;;
+        merges)
+            COMPREPLY+=( $(compgen -W '${OPTS[MERGES]}' -- "${cur}") )
+            ;;
+        sync)
+            COMPREPLY+=( $(compgen -W '${OPTS[SYNC]} ${OPTS[SYNC_ARG]}' -- "${cur}") )
+            ;;
+    esac
+    if [[ -z ${command} ]]; then
+        COMPREPLY+=( $(compgen -W '${OPTS[COMMANDS]}' -- "${cur}") )
+    fi
+} &&
+complete -F _emaint emaint
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80
