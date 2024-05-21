@@ -103,7 +103,7 @@ _emerge()
                 --buildpkg-exclude \
                 --buildpkg --buildpkgonly \
                 --backtrack= \
-                --changelog --clean --color=y --color=n --columns --complete-graph --config \
+                --changelog --clean --color=y --color=n --columns --complete-graph --config --check-news \
                 --complete-graph-if-new-use --complete-graph-if-new-ver \
                 --config-root \
                 --changed-deps --changed-deps-report --changed-slot --changed-use \
@@ -112,23 +112,28 @@ _emerge()
                 --dynamic-deps --dynamic-deps=y --dynamic-deps=n \
                 --emptytree \
                 --exclude \
-                --fetch-all-uri --fetchonly \
+                --fail-clean --fetch-all-uri --fetchonly --fuzzy-search \
                 --getbinpkg --getbinpkgonly \
-                --ignore-default-opts --info \
-                --jobs= \
+                --ignore-default-opts --ignore-built-slot-operator-deps --ignore-soname-deps \
+                --ignore-world --implicit-system-deps --info \
+                --jobs= --load-average= \
                 --keep-going \
-                --metadata \
-                --newuse --noconfmem --nodeps --noreplace --nospinner \
+                --misspell-suggestions --metadata \
+                --newrepo --newuse --noconfmem --nodeps --noreplace --nospinner \
                 --oneshot --onlydeps --onlydeps-with-ideps --onlydeps-with-rdeps \
-                --pretend --prune \
-                --quiet --rage-clean \
-                --reinstall=changed-use --regen \
-                --search \
-                --sync \
+                --pretend --prune --package-moves --pkg-format \
+                --quiet --quiet-build --quiet-fail --quiet-repo-display --quiet-unmerge-warn \
+                --rage-clean --regex-search-auto --read-news \
+                --reinstall=changed-use --reinstall-atoms --regen --rebuild-exclude --rebuild-ignore --rebuild-if-new-slot \
+                --rebuild-if-new-rev --rebuild-if-new-ver --rebuild-if-unbuilt --rebuilt-binaries \
+                --search --search-index --search-similarity \
+                --sync --select --selective \
+                --sync-submodule=glsa --sync-submodule=news --sync-submodule=profiles \
                 --tree \
-                --unmerge --update --update-if-installed --upgradeonly --usepkg --usepkgonly \
-                --verbose --verbose-conflicts \
-                --with-bdeps=y --with-bdeps=n --with-test-deps"
+                --unordered-display --use-ebuild-visibility --useoldpkg-atoms --usepkg-exclude-live \
+                --unmerge --update --update-if-installed --upgradeonly --usepkg --usepkgonly --usepkg-exclude \
+                --verbose --verbose-conflicts --verbose-slot-rebuilds \
+                --with-bdeps=y --with-bdeps=n --with-bdeps-auto --with-test-deps"
             if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
                 opts="${opts} --help --resume --searchdesc --version"
             fi
