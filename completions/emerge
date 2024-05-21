@@ -10,16 +10,16 @@ source "@helpersdir@/gentoo-common.sh"
 #
 _emerge()
 {
-    local c cur prev curword numwords opts cond prepend
+    local c cur prev cond prepend
     local words stophere i x
     local action actionpos sysactions pkgpos
     local portdir=$(_portdir -o)
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    numwords=${#COMP_WORDS[*]}
-    curword=${COMP_CWORD}
-    opts=''
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    local prev=${COMP_WORDS[COMP_CWORD-1]}
+    local numwords=${#COMP_WORDS[*]}
+    local curword=${COMP_CWORD}
+    local opts=()
 
     if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
         COMPREPLY=($(compgen -f -- ${cur}))
@@ -86,69 +86,71 @@ _emerge()
         # If a resume option was specified, it needs special handling.
         if [[ ${COMP_LINE} =~ --(resume|skipfirst) ]] ; then
             if [[ ${cur} == --* ]]; then
-                opts="--ask --pretend --resume --skipfirst"
+                opts=( --ask --pretend --resume --skipfirst )
             elif [[ ${cur} == -* ]]; then
-                [[ ${COMP_LINE} =~ --(ask|pretend) ]] && opts="-a -p"
+                [[ ${COMP_LINE} =~ --(ask|pretend) ]] && opts=( -a -p )
             fi
         elif [[ ${cur} == --* ]]; then
             # Complete on long options.
-            opts="--alphabetical \
-                --ask \
-                --autounmask-write --autounmask-keep-keywords --autounmask-continue \
-                --autounmask-backtrack --autounmask-only --autounmask-unrestricted-atoms \
-                --autounmask-keep-masks --autounmask-license --autounmask-use \
-                --accept-properties --accept-restrict --alert --alert=y --alert=n \
-                --ask-enter-invalid \
-                --binpkg-changed-deps --binpkg-respect-use \
-                --buildpkg-exclude \
-                --buildpkg --buildpkgonly \
-                --backtrack= \
-                --changelog --clean --color=y --color=n --columns --complete-graph --config --check-news \
-                --complete-graph-if-new-use --complete-graph-if-new-ver \
-                --config-root \
-                --changed-deps --changed-deps-report --changed-slot --changed-use \
-                --debug --deep --depclean --deselect \
-                --depclean-lib-check \
-                --dynamic-deps --dynamic-deps=y --dynamic-deps=n \
-                --emptytree \
-                --exclude \
-                --fail-clean --fetch-all-uri --fetchonly --fuzzy-search \
-                --getbinpkg --getbinpkgonly \
-                --ignore-default-opts --ignore-built-slot-operator-deps --ignore-soname-deps \
-                --ignore-world --implicit-system-deps --info \
-                --jobs= --load-average= \
-                --keep-going \
-                --misspell-suggestions --metadata \
-                --newrepo --newuse --noconfmem --nodeps --noreplace --nospinner \
-                --oneshot --onlydeps --onlydeps-with-ideps --onlydeps-with-rdeps \
-                --pretend --prune --package-moves --pkg-format \
-                --quiet --quiet-build --quiet-fail --quiet-repo-display --quiet-unmerge-warn \
-                --rage-clean --regex-search-auto --read-news \
-                --reinstall=changed-use --reinstall-atoms --regen --rebuild-exclude --rebuild-ignore --rebuild-if-new-slot \
-                --rebuild-if-new-rev --rebuild-if-new-ver --rebuild-if-unbuilt --rebuilt-binaries \
-                --search --search-index --search-similarity \
-                --sync --select --selective \
-                --sync-submodule=glsa --sync-submodule=news --sync-submodule=profiles \
-                --tree \
-                --unordered-display --use-ebuild-visibility --useoldpkg-atoms --usepkg-exclude-live \
-                --unmerge --update --update-if-installed --upgradeonly --usepkg --usepkgonly --usepkg-exclude \
-                --verbose --verbose-conflicts --verbose-slot-rebuilds \
-                --with-bdeps=y --with-bdeps=n --with-bdeps-auto --with-test-deps"
+            opts=(
+                --alphabetical
+                --ask
+                --autounmask-write --autounmask-keep-keywords --autounmask-continue={y,n}
+                --autounmask-backtrack --autounmask-only --autounmask-unrestricted-atoms
+                --autounmask-keep-masks --autounmask-license={y,n} --autounmask-use={y,n}
+                --accept-properties --accept-restrict --alert --alert={y,n}
+                --ask-enter-invalid
+                --binpkg-changed-deps --binpkg-respect-use
+                --buildpkg-exclude
+                --buildpkg --buildpkgonly
+                --backtrack=
+                --changelog --clean --color={y,n} --columns --complete-graph --config --check-news
+                --complete-graph-if-new-use={y,n} --complete-graph-if-new-ver={y,n}
+                --config-root
+                --changed-deps --changed-deps-report --changed-slot --changed-use
+                --debug --deep --depclean --deselect
+                --depclean-lib-check
+                --dynamic-deps={y,n}
+                --emptytree
+                --exclude
+                --fail-clean --fetch-all-uri --fetchonly --fuzzy-search
+                --getbinpkg --getbinpkgonly
+                --ignore-default-opts --ignore-built-slot-operator-deps={y,n} --ignore-soname-deps={y,n}
+                --ignore-world --implicit-system-deps={y,n} --info
+                --jobs= --load-average=
+                --keep-going
+                --misspell-suggestions={y,n} --metadata
+                --newrepo --newuse --noconfmem --nodeps --noreplace --nospinner
+                --oneshot --onlydeps --onlydeps-with-ideps --onlydeps-with-rdeps
+                --pretend --prune --package-moves --pkg-format
+                --quiet --quiet-build --quiet-fail --quiet-repo-display --quiet-unmerge-warn
+                --rage-clean --regex-search-auto={y,n} --read-news
+                --reinstall=changed-use --reinstall-atoms --regen --rebuild-exclude --rebuild-ignore --rebuild-if-new-slot
+                --rebuild-if-new-rev --rebuild-if-new-ver --rebuild-if-unbuilt --rebuilt-binaries
+                --search --search-index --search-similarity
+                --sync --select --selective
+                --sync-submodule={glsa,news,profiles}
+                --tree
+                --unordered-display --use-ebuild-visibility --useoldpkg-atoms --usepkg-exclude-live
+                --unmerge --update --update-if-installed --upgradeonly --usepkg --usepkgonly --usepkg-exclude
+                --verbose --verbose-conflicts --verbose-slot-rebuilds
+                --with-bdeps={y,n} --with-bdeps-auto={y,n} --with-test-deps
+            )
             if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
-                opts="${opts} --help --resume --searchdesc --version"
+                opts+=( --help --resume --searchdesc --version )
             fi
         elif [[ ${cur} == -* ]]; then
             # Complete on short options.
-            opts="-B -D -G -K -N -O -a -b -d -e -f -g -k -l -n -o -p -q -t -u -v"
+            opts+=( -B -D -G -K -N -O -a -b -d -e -f -g -k -l -n -o -p -q -t -u -v )
             if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
-                opts="${opts} -h -S -V"
+                opts+=( -h -S -V )
             fi
             if [[ -z ${action} ]] && [[ ${curword} -eq $((pkgpos - 1)) ]] ; then
-                opts="${opts} -C -P -c -s"
+                opts+=( -C -P -c -s )
             fi
         fi
 
-        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        COMPREPLY=($(compgen -W '${opts[*]}' -- ${cur}))
 
         # NOTE: This slows things down!
         # (Adapted from bash_completion by Ian Macdonald <ian@caliban.org>)
@@ -179,11 +181,11 @@ _emerge()
 
     # Complete on installed packages when unmerging.
     if [[ "${action}" =~ --(rage-clean|unmerge) ]]; then
-    if [[ -n "${cur}" ]] ; then
-        if [[ "${cur}" == */* ]]; then
-        words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg; compgen -G "${cur}*")
-        else
-        words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg; compgen -S '/' -G "${cur}*")
+        if [[ -n "${cur}" ]] ; then
+            if [[ "${cur}" == */* ]]; then
+                words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg; compgen -G "${cur}*")
+            else
+                words=$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg; compgen -S '/' -G "${cur}*")
 
                 local n=0
                 for i in ${words} ; do
@@ -193,13 +195,13 @@ _emerge()
                 if [[ ${n} -eq 1 ]] ; then
                     words="$(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg ; compgen -G "*-*/*")"
                 fi
+            fi
+                COMPREPLY=($(for i in ${words} ; do \
+                                [[ ${i} == ${cur}* ]] && echo ${i} ; \
+                            done))
+        else
+            COMPREPLY=($(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg ; compgen -S '/' -G "*-*"))
         fi
-            COMPREPLY=($(for i in ${words} ; do \
-                            [[ ${i} == ${cur}* ]] && echo ${i} ; \
-                        done))
-    else
-        COMPREPLY=($(builtin cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg ; compgen -S '/' -G "*-*"))
-    fi
 
         [[ -z "${COMPREPLY}" ]] && _pkgname_only ${cur} @GENTOO_PORTAGE_EPREFIX@/var/db/pkg
         return 0
@@ -217,7 +219,7 @@ _emerge()
 
     # Handle cases where a conditional is specified.
     if [[ -n "${cond}" ]]; then
-    if [[ -n "${cur}" ]]; then
+        if [[ -n "${cur}" ]]; then
             if [[ ${cur} == */* ]]; then
                 if [[ ${cur} == *-[0-9]* ]] ; then
                     words="$(\
@@ -233,7 +235,7 @@ _emerge()
                             done ; \
                         done)"
                 else
-            words="$(\
+                    words="$(\
                     for pd in ${portdir} ; do \
                         builtin cd ${pd}; \
                         compgen -X "*metadata.xml" -G "${cur}*" -- ${cur} ; \
@@ -308,7 +310,7 @@ _emerge()
         COMPREPLY=($(compgen -W "${words}" -- "${cur}"))
     fi
 
-        # If all else fails, try to complete on package names without the
+    # If all else fails, try to complete on package names without the
     # category being specified.
     if [[ -z "${COMPREPLY}" ]]; then
         words="$(\
@@ -413,7 +415,7 @@ _emerge()
                 builtin cd ${pd} ; \
                 compgen -S '/' -G "*-*" ; \
             done)""${sysactions}"
-    COMPREPLY=($(compgen -W "${words}" -- ${cur}))
+        COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
 
     # If all else fails, try to complete on package names without the
@@ -426,7 +428,7 @@ _emerge()
                     [[ -d $i ]] && echo ${i##*/}; \
                 done ; \
             done)"
-    COMPREPLY=($(compgen -W "${words}" -- ${cur}))
+        COMPREPLY=($(compgen -W "${words}" -- ${cur}))
     fi
 
     return 0
