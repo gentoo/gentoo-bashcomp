@@ -10,20 +10,21 @@
 
 
 _layman() {
-    local cur prev opts r_overlays l_overlays splitopt
+    local cur prev r_overlays
 
     COMPREPLY=()
 
-    opts="--version -h --help -a --add -d --delete -s --sync -i --info
+    local opts=(
+        --version -h --help -a --add -d --delete -s --sync -i --info
         -S --sync-all -L --list -l --list-local -n --nofetch -p --priority
         -c --config -O --overlay_defs -o --overlays -v --verbose -q --quiet
-        -N --nocolor -Q --quietness -W --width -k --nocheck --debug-level"
-    r_overlays="$(layman -LkNq 2>/dev/null | grep -v '^$' | cut -d' ' -f3)"
-    l_overlays="$(layman -lkNq 2>/dev/null | grep -v '^$' | cut -d' ' -f3)"
-    splitopt=false
+        -N --nocolor -Q --quietness -W --width -k --nocheck --debug-level
+    )
+    r_overlays() { layman -LkNq 2>/dev/null | grep -v '^$' | cut -d' ' -f3; }
+    l_overlays() { layman -lkNq 2>/dev/null | grep -v '^$' | cut -d' ' -f3; }
 
     _get_comp_words_by_ref -n = cur prev
-    _split_longopt && splitopt=true
+    _split_longopt && local splitopt=1
 
     case ${prev} in
         --version|-h|--help|-W|--width|-o|--overlays)
@@ -31,15 +32,16 @@ _layman() {
             return 0
             ;;
         -a|--add|-i|--info)
-            COMPREPLY=( $(compgen -W "${r_overlays}" -- "${cur}") )
+            COMPREPLY=( $(compgen -W "$(r_overlays)" -- "${cur}") )
             return 0
             ;;
         -d|--delete)
-            COMPREPLY=( $(compgen -W "${l_overlays}" -- "${cur}") )
+            COMPREPLY=( $(compgen -W "$(l_overlays)" -- "${cur}") )
             return 0
             ;;
         -s|--sync)
-            COMPREPLY=( $(compgen -W "${l_overlays} ALL" -- "${cur}") )
+            COMPREPLY=( $(compgen -W "$(l_overlays)" -- "${cur}") )
+            COMPREPLY+=( $(compgen -W "ALL" -- "${cur}") )
             return 0
             ;;
         -p|--priority)
@@ -61,9 +63,9 @@ _layman() {
             ;;
     esac
 
-    $splitopt && return 0
+    [[ -n ${splitopt} ]] && return 0
 
-    COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+    COMPREPLY=( $(compgen -W '${opts[*]}' -- "${cur}") )
 } &&
 complete -F _layman layman
 
