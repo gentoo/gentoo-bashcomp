@@ -1,6 +1,6 @@
 # Gentoo Linux Bash Shell Command Completion
 #
-# Copyright 1999-2013 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License, v2 or later
 
 #
@@ -8,25 +8,26 @@
 #
 _ebuild()
 {
-    local cur opts
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
+    local i noopts seenf cur=${COMP_WORDS[COMP_CWORD]}
+    local cmds=(
+        help setup clean fetch digest manifest unpack compile test preinst
+        install postinst qmerge merge unmerge prerm postrm config package rpm
+        configure prepare instprep
+    )
+    local opts=( --debug --force --ignore-default-opts --skip-manifest --help )
 
-    opts="help setup clean fetch digest manifest unpack compile test preinst \
-        install postinst qmerge merge unmerge prerm postrm config package rpm \
-        configure prepare"
+    for (( i=1 ; i < ${COMP_CWORD} ; i++ )) ; do
+        [[ ${noopts} || ${COMP_WORDS[$i]/#-*} ]] && seenf=1
+        [[ ${COMP_WORDS[$i]} == "--" ]] && noopts=1
+    done
 
-    if [[ $COMP_CWORD -eq 1 ]] ; then
-    COMPREPLY=($(compgen -f -X "!*.ebuild" -- ${cur}) \
-            $(compgen -d -- ${cur}) \
-            $(compgen -W '--debug --force --help --ignore-default-opts --skip-manifest' -- ${cur}))
-
-    elif [[ $COMP_CWORD -eq 2 && "${COMP_WORDS[1]}" = "--debug --force --ignore-default-opts --skip-manifest" ]] ; then
-    COMPREPLY=($(compgen -f -X "!*.ebuild" -- ${cur}) $(compgen -d -- ${cur}))
-
-    elif [[ $COMP_CWORD -ge 2 ]] ; then
-    COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+    if [[ ${seenf} ]] ; then
+        COMPREPLY=( $(compgen -W '${cmds[*]}' -- "${cur}") )
+    else
+        _filedir ebuild
     fi
+
+    [[ ${noopts} ]] || COMPREPLY+=( $(compgen -W '${opts[*]}' -- "${cur}") )
     return 0
 } &&
 complete -o filenames -F _ebuild ebuild
