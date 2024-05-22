@@ -4,29 +4,28 @@
 # Distributed under the terms of the GNU General Public License, v2 or later
 
 _glsa_check() {
-    local cur opts
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    opts="-l --list -d --dump --print -t --test -p --pretend -f --fix -i
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local opts="-l --list -d --dump --print -t --test -p --pretend -f --fix -i
     --inject -n --nocolor -e --emergelike -h --help -V --version -v --verbose
-    -c --cve -m --mail"
+    -c --cve -m --mail -q --quiet -r --reverse"
 
     if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
-        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+        COMPREPLY=($(compgen -W "${opts}" -- "${cur}"))
         return 0
     fi
 
     # too slow otherwise
-    if [[ ! -f ${ROOT}/tmp/gc.out ]] || \
-        [[ $(stat ${ROOT}/tmp/gc.out | \
-        sed -n -e 's/^Modify: \([[:digit:]]\+-[[:digit:]]\+-[[:digit:]]\+\).*$/\1/p') != "$(date +%F)" ]]
+    local cache_file=${ROOT}/tmp/.completion.glsa-check.cache
+    if [[ ! -f ${cache_file} ]] || \
+        (( $(date +%s) - $(stat -c %Y "${cache_file}") > 4 * 3600 ))
     then
         glsa-check -nl 2>/dev/null | \
             sed -n -e  's/^\([[:digit:]]\+-[[:digit:]]\+\) .*$/\1/p' > \
-                ${ROOT}/tmp/gc.out
+                "${cache_file}"
     fi
 
-    COMPREPLY=($(compgen -W "${opts} $(< ${ROOT}/tmp/gc.out)" -- ${cur}))
+    COMPREPLY=($(compgen -W "${opts} all new affected $(< "${cache_file}")" -- "${cur}"))
 } &&
 complete -F _glsa_check glsa-check
 
