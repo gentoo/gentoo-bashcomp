@@ -45,16 +45,3 @@ tag:
 	@echo
 	@echo "created tag $(distpkg) - remember to push it"
 	@echo
-
-dist: tag
-	git archive --prefix=$(distpkg)/ --format=tar -o $(distpkg).tar $(distpkg)
-	mkdir $(distpkg)/
-	git log > $(distpkg)/ChangeLog
-	tar vfr $(distpkg).tar $(distpkg)/ChangeLog
-	xz $(distpkg).tar
-	rm -rf $(distpkg)/
-	@echo "success."
-
-dist-upload: dist
-	scp $(distpkg).tar.xz dev.gentoo.org:/space/distfiles-local/
-	ssh dev.gentoo.org chmod ug+rw /space/distfiles-local/$(distpkg).tar.xz
