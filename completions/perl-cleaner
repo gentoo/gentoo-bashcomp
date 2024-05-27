@@ -1,0 +1,41 @@
+# Gentoo Linux Bash Shell Command Completion
+#
+# Copyright 2024 Gentoo Authors
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#
+# perl-cleaner completion (from app-admin/perl-cleaner)
+#
+
+_perl_cleaner() {
+    local i cur prev
+    _get_comp_words_by_ref cur prev
+
+    local OPTS=(
+        -h --help -V --version -p --pretend -v --verbose -q --quite
+        --modules --allmodules --libperl --all --reallyall
+        --dont-delete-leftovers -P --package-manager
+    )
+
+    for (( i=1; i < COMP_CWORD; i++ )); do
+        if [[ ${COMP_WORDS[i]} == -- ]]; then
+            local root_command=emerge
+            _command_offset ${i}
+            return
+        fi
+    done
+
+    case ${prev} in
+        -P|--package-manager)
+            COMPREPLY=($(compgen -W 'portage pkgcore paludis' -- "${cur}"))
+            return 0
+            ;;
+    esac
+
+    COMPREPLY=( $(compgen -W '${OPTS[*]}' -- "${cur}") )
+    return 0
+
+} &&
+complete -F _perl_cleaner perl-cleaner
+
+# vim: ft=sh:et:ts=4:sw=4:tw=80
