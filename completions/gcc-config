@@ -1,42 +1,46 @@
 # Gentoo Linux Bash Shell Command Completion
 #
-# Copyright 1999-2013 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License, v2 or later
 
 #
-# gcc-config completion command
+# gcc-config completion (from sys-devel/gcc-config)
 #
 _gcc_config() {
-    local cur prev opts
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="-O --use-old \
-        -P --use-portage-chost \
-        -c --get-current-profile \
-        -l --list-profiles \
-        -E --print-environ \
-        -B --get-bin-path \
-        -L --get-lib-path \
-        -X --get-stdcxx-incdir"
+    local cur=${COMP_WORDS[COMP_CWORD]} prev=${COMP_WORDS[COMP_CWORD-1]}
+    local OPTS=(
+        -C --nocolor
+        -O --use-old
+        -f --force
+        -P --use-portage-chost
+        -c --get-current-profile
+        -l --list-profiles
+        -S --split-profile
+        -E --print-environ
+        -B --get-bin-path
+        -L --get-lib-path
+        -X --get-stdcxx-incdir
+    )
+    _list_profiles() {
+        gcc-config --nocolor --list-profiles 2>/dev/null | \
+            sed -r -e 's/\[([^]]*)\] //g' -e 's/ \*//g'
+    }
 
-    if [[ "${cur}" == -* ]] ; then
-        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W '${OPTS[*]}' -- "${cur}") )
         return 0
     elif [[ ${COMP_CWORD} -eq 1 ]] ; then
-        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) \
-            $(compgen -W "$(gcc-config -l | sed -r -e 's/(\[([^]]*)\]) //g')" \
-                -- ${cur}) )
+        COMPREPLY=( $(compgen -W '${OPTS[*]}' -- "${cur}") )
+        COMPREPLY+=( $(compgen -W '$(_list_profiles)' -- "${cur}" ))
         return 0
     fi
 
-    case "${prev}" in
+    case ${prev} in
         -O|--use-old|-P|--use-portage-chost|-c|--get-current-profile|-l|--list-profiles)
             COMPREPLY=()
             ;;
         *)
-            COMPREPLY=( $(compgen -W "\
-                $(gcc-config -l | sed -r -e 's/(\[([^]]*)\]) //g')" -- ${cur}) )
+            COMPREPLY=( $(compgen -W '$(_list_profiles)' -- "${cur}") )
             ;;
     esac
 } &&
