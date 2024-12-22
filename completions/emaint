@@ -3,6 +3,8 @@
 # Copyright 2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License, v2 or later
 
+source "@helpersdir@/gentoo-common.sh"
+
 #
 # emaint completion (from sys-apps/portage)
 #
