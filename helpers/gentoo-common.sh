@@ -10,7 +10,6 @@
 # /etc/portage/repos.conf{,/*}
 # /usr/share/portage/config/repos.conf
 # /etc/portage/make.conf
-# /etc/make.conf
 # /usr/share/portage/config/make.globals
 #
 # The first two files are in repos.conf format and must be parsed for the
@@ -30,7 +29,6 @@ _portdir() {
                 overlaypath+=($(_parsereposconf ${overlayname} location))
             done
 
-            source @GENTOO_PORTAGE_EPREFIX@/etc/make.conf 2>/dev/null
             source @GENTOO_PORTAGE_EPREFIX@/etc/portage/make.conf 2>/dev/null
 
             overlaypath+=(${PORTDIR_OVERLAY})
@@ -47,7 +45,6 @@ _portdir() {
         fi
     else
         source @GENTOO_PORTAGE_EPREFIX@/usr/share/portage/config/make.globals 2>/dev/null
-        source @GENTOO_PORTAGE_EPREFIX@/etc/make.conf 2>/dev/null
         source @GENTOO_PORTAGE_EPREFIX@/etc/portage/make.conf 2>/dev/null
 
         echo "${PORTDIR}"
