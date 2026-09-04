@@ -22,7 +22,7 @@ _equery()
         if [[ $j -lt $COMP_CWORD ]]; then
         j=$((j + 1))
         case $i in
-            @(belongs|ch@(anges|eck)|dep@(ends|graph)|files|has?(use)|keywords|list|meta|size|uses|which|b|c|k|d|g|f|a|h|y|l|m|s|u|w))
+            @(belongs|check|dep@(ends|graph)|files|has?(use)|keywords|list|meta|size|uses|which|b|c|k|d|g|f|a|h|y|l|m|s|u|w))
             mode=$i
             ;;
         esac
@@ -37,28 +37,9 @@ _equery()
             COMPREPLY=($(compgen -W "-q --quiet -C --nocolor -h --help -V --version" -- $cur))
             ;;
         *)
-            COMPREPLY=($(compgen -W "belongs changes check depends depgraph files has hasuse keywords list meta size uses which" -- $cur))
+            COMPREPLY=($(compgen -W "belongs check depends depgraph files has hasuse keywords list meta size uses which" -- $cur))
             ;;
         esac
-        ;;
-    c?(hanges))
-        # Complete package name only if it is not yet supplied.
-        if [[ ${prev} == ${mode} ]]; then
-            case $cur in
-                -*)
-                    COMPREPLY=($(compgen -W "-h --help" -- $cur))
-                ;;
-                *)
-                    _pkgname -A $cur
-                ;;
-            esac
-        else
-            case $cur in
-                *)
-                    COMPREPLY=($(compgen -W "-h --help -l --latest -f --full --limit --from --to" -- $cur))
-                ;;
-            esac
-        fi
         ;;
     f?(iles))
         # Only complete if the previous entry on the command line is not
