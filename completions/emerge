@@ -83,12 +83,21 @@ _emerge()
 
     # Complete on options.
     if [[ ${cur} == -* ]]; then
+        local resumable=1
+        for ((i = 1; i < ${numwords}; i++)); do
+            [[ ${i} -eq ${curword} ]] && continue
+            [[ -z ${COMP_WORDS[$i]} ]] && continue
+            [[ ${COMP_WORDS[$i]} =~ ^(--(ask|pretend|resume|skipfirst)|-[ap]+)$ ]] && continue
+            resumable=0
+            break
+        done
+
         # If a resume option was specified, it needs special handling.
         if [[ ${COMP_LINE} =~ --(resume|skipfirst) ]] ; then
             if [[ ${cur} == --* ]]; then
                 opts=( --ask --pretend --resume --skipfirst )
-            elif [[ ${cur} == -* ]]; then
-                [[ ${COMP_LINE} =~ --(ask|pretend) ]] && opts=( -a -p )
+            else
+                opts=( -a -p )
             fi
         elif [[ ${cur} == --* ]]; then
             # Complete on long options.
@@ -136,8 +145,9 @@ _emerge()
                 --verbose --verbose-conflicts --verbose-slot-rebuilds
                 --with-bdeps={y,n} --with-bdeps-auto={y,n} --with-test-deps
             )
+            [[ ${resumable} -eq 1 ]] && opts+=( --resume --skipfirst )
             if [[ ${curword} -eq 1 ]] && [[ ${numwords} -eq 2 ]] ; then
-                opts+=( --help --resume --searchdesc --version )
+                opts+=( --help --searchdesc --version )
             fi
         elif [[ ${cur} == -* ]]; then
             # Complete on short options.
