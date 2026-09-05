@@ -119,8 +119,7 @@ _equery()
                         --early-out -n --name-only" -- $cur))
                     ;;
                 *)
-                    COMPREPLY=($(compgen -f -- $cur) \
-                        $(compgen -d -S '/' -- $cur))
+                    _filedir
                     ;;
             esac
         fi

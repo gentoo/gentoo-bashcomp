@@ -22,7 +22,7 @@ _emerge()
     local opts=()
 
     if [[ ${prev} == +([<>]) ]] ; then
-        COMPREPLY=($(compgen -f -- ${cur}))
+        _filedir
         return 0
     fi
 

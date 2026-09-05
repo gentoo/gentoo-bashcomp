@@ -20,7 +20,7 @@ _splat() {
 
     case "${prev}" in
         -f|--logfile)
-            COMPREPLY=($(compgen -f -- ${cur}))
+            _filedir
             ;;
         *)
             _pkgname -A ${cur}

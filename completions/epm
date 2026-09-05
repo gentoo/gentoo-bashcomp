@@ -34,7 +34,7 @@ _epm() {
             done
 
             if [[ ${file} -eq 1 ]] ; then
-                COMPREPLY=($(compgen -f -- ${cur}))
+                _filedir
             elif [[ ${all} -eq 1 ]] ; then
                 COMPREPLY=()
             else
