@@ -130,10 +130,12 @@ _pkgname_only()
 #
 _pkgname()
 {
-    local mode cur portdir only
+    local mode cur portdir only eqatom prev
     mode="$1"
     cur="$2"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
     portdir=$(_portdir -o)
+    [[ ${prev} == "=" || ${cur:0:1} == "=" || ${cur:1:1} == "=" ]] && eqatom=1
     # Ignore '=' at the beginning of the current completion
     [[ ${cur:1:1} == "=" ]] && cur=${cur:2}
     [[ ${cur:0:1} == "=" ]] && cur=${cur:1}
@@ -155,6 +157,9 @@ _pkgname()
                 only=1
                 _pkgname_only ${cur} @GENTOO_PORTAGE_EPREFIX@/var/db/pkg
             fi
+            if [[ ${#COMPREPLY[@]} == 1 && -z ${eqatom} && -z ${only} ]]; then
+                COMPREPLY=("=${COMPREPLY}")
+            fi
         ;;
     -A)
         # Complete either the category or the complete package name
@@ -172,7 +177,7 @@ _pkgname()
             # When we've completed most of the name, also display the version for
             # possible completion.
             if [[ ${#COMPREPLY[@]} -le 1 || ${cur:${#cur}-1:1} == "-" ]] \
-                && [[ ${cur} != */ ]]; then
+                && [[ ${cur} != */ && -n ${eqatom} ]]; then
                     # Use the portage cache to complete specific versions from
                     COMPREPLY=(${COMPREPLY[@]} $(
                         for pd in ${portdir}; do
@@ -204,14 +209,17 @@ _pkgname()
             if [[ ${#COMPREPLY[@]} == 1 ]]; then
                 COMPREPLY=($(compgen -W "$(
                     for pd in ${portdir}; do
-                        if [[ -d ${pd}/metadata/md5-cache ]]; then
+                        if [[ -z ${eqatom} ]]; then
+                            builtin cd ${pd}
+                            compgen -G "$COMPREPLY*"
+                        elif [[ -d ${pd}/metadata/md5-cache ]]; then
                             builtin cd ${pd}/metadata/md5-cache
                             compgen -G "$COMPREPLY*"
                         elif [[ -d ${pd}/metadata/cache ]]; then
                             builtin cd ${pd}/metadata/cache
                             compgen -G "$COMPREPLY*"
                         fi
-                    done
+                    done | sort -u
                 )" -- $cur))
             fi
         fi
@@ -225,12 +233,6 @@ _pkgname()
         # Somebody screwed up! :-)
         ;;
     esac
-    # 'equery' wants an '=' in front of specific package versions.
-    # Add it if there is only one selected package and it isn't there already.
-    if [[ ${#COMPREPLY[@]} == 1 && ${COMP_WORDS[COMP_CWORD]:0:1} != "=" ]]
-    then
-        [[ -z "${only}" ]] && COMPREPLY=("="$COMPREPLY)
-    fi
 }
 
 #
