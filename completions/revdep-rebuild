@@ -12,10 +12,10 @@ _revdep_rebuild() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     numwords=${#COMP_WORDS[*]}
 
-    if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
-            COMPREPLY=($(compgen -f -- ${cur}))
-            return 0
-        fi
+    if [[ ${prev} == +([<>]) ]] ; then
+        COMPREPLY=($(compgen -f -- ${cur}))
+        return 0
+    fi
 
     # find action
     for ((i = 0; i < ${numwords}; i++ )); do

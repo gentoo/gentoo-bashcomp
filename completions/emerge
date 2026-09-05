@@ -21,7 +21,7 @@ _emerge()
     local curword=${COMP_CWORD}
     local opts=()
 
-    if [[ ${prev} == '>' || ${prev} == '<' ]] ; then
+    if [[ ${prev} == +([<>]) ]] ; then
         COMPREPLY=($(compgen -f -- ${cur}))
         return 0
     fi
