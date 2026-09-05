@@ -220,6 +220,7 @@ _emerge()
     # Check for conditional.
     cond="${cur%%[A-Za-z0-9]*}"
     cur="${cur:${#cond}}"
+    [[ -z ${cond} && ${prev} == "=" ]] && cond=${prev}
     if [[ ${cond:0:1} == "'" || ${cond:0:1} == '"' ]] ; then
         prepend="-P ${cond:1}"
         c="${cond:1}"

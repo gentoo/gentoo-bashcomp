@@ -17,7 +17,7 @@ _epkginfo()
 
     # Only complete if the previous entry on the command line is not
     # a package name.
-    if [[ ${COMP_CWORD} -eq 1 || ${prev:0:1} == "-" ]]; then
+    if [[ ${COMP_CWORD} -eq 1 || ${prev:0:1} == "-" || ${prev} == "=" ]]; then
         _equery_meta $cur
     fi
 
